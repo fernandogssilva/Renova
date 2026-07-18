@@ -36,6 +36,8 @@ AllowNoIcons=yes
 DirExistsWarning=no
 CloseApplications=yes
 RestartApplications=no
+LicenseFile=EULA.rtf
+InfoBeforeFile=
 
 [Languages]
 Name: "portuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"

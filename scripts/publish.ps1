@@ -35,3 +35,15 @@ if ($LASTEXITCODE -ne 0) { throw "Falha ao publicar (código $LASTEXITCODE)" }
 Write-Host ""
 Write-Host "Publicado em: $out" -ForegroundColor Green
 Get-ChildItem $out | Select-Object Name, @{N='SizeMB';E={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
+
+# Gera SHA-256 e SHA-1 para validação de integridade das releases
+$exePath = Join-Path $out 'SysMaintenanceHub.exe'
+if (Test-Path $exePath) {
+    $sha256 = (Get-FileHash -Algorithm SHA256 -Path $exePath).Hash
+    $sha1   = (Get-FileHash -Algorithm SHA1   -Path $exePath).Hash
+    Set-Content -Path (Join-Path $out 'SysMaintenanceHub.exe.sha256') -Value "$sha256  SysMaintenanceHub.exe" -Encoding ASCII
+    Set-Content -Path (Join-Path $out 'SysMaintenanceHub.exe.sha1')   -Value "$sha1  SysMaintenanceHub.exe"   -Encoding ASCII
+    Write-Host ""
+    Write-Host "SHA-256: $sha256" -ForegroundColor Cyan
+    Write-Host "SHA-1:   $sha1" -ForegroundColor DarkGray
+}

@@ -19,20 +19,24 @@ public sealed class WindowsUpdateService
 
     public WindowsUpdateService(PowerShellRunner ps) => _ps = ps;
 
+    // Pinned version (auditada) — evita supply-chain attack via 'Force' pegando última versão da PSGallery.
+    private const string PinnedPSWindowsUpdateVersion = "2.2.1.5";
+
     public async Task EnsureModuleAsync(Action<string>? onLine, CancellationToken ct)
     {
-        const string script = @"
-if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) {
-    Write-Output 'Instalando NuGet provider...'
+        var script = $@"
+$required = '{PinnedPSWindowsUpdateVersion}'
+$existing = Get-Module -ListAvailable -Name PSWindowsUpdate | Where-Object {{ $_.Version -eq [Version]$required }}
+if (-not $existing) {{
+    Write-Output ""Instalando PSWindowsUpdate versao pinada $required...""
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope AllUsers | Out-Null
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-    Write-Output 'Instalando modulo PSWindowsUpdate...'
-    Install-Module -Name PSWindowsUpdate -Force -Scope AllUsers -AllowClobber -Confirm:$false | Out-Null
+    Install-Module -Name PSWindowsUpdate -RequiredVersion $required -Force -Scope AllUsers -AllowClobber -Confirm:$false | Out-Null
     Write-Output 'PSWindowsUpdate instalado.'
-} else {
-    Write-Output 'PSWindowsUpdate ja presente.'
-}
-Import-Module PSWindowsUpdate -ErrorAction Stop
+}} else {{
+    Write-Output ""PSWindowsUpdate $required ja presente.""
+}}
+Import-Module PSWindowsUpdate -RequiredVersion $required -ErrorAction Stop
 ";
         var result = await _ps.RunAsync(script, onLine, ct);
         if (!result.Success)
@@ -83,12 +87,19 @@ foreach ($x in $u) {
     /// </summary>
     public async Task<bool> InstallByKbAsync(string kb, Action<string>? onLine, CancellationToken ct)
     {
+        // SEGURANÇA: valida estritamente antes de interpolar em script PS elevado
+        var normalized = (kb ?? "").Trim().Replace("KB", "", StringComparison.OrdinalIgnoreCase);
+        if (!System.Text.RegularExpressions.Regex.IsMatch(normalized, @"^\d{5,8}$"))
+        {
+            onLine?.Invoke($"[BLOQUEADO] KB inválida: '{kb}' — apenas dígitos (5–8) são permitidos.");
+            _log.Warning("Tentativa de instalar KB com formato inválido: {Kb}", kb);
+            return false;
+        }
         await EnsureModuleAsync(onLine, ct);
-        var kbNumber = kb.Replace("KB", "", StringComparison.OrdinalIgnoreCase).Trim();
         var script = $@"
 Import-Module PSWindowsUpdate -ErrorAction Stop
-Write-Output 'Instalando KB{kbNumber}...'
-Get-WindowsUpdate -MicrosoftUpdate -KBArticleID {kbNumber} -Install -AcceptAll -IgnoreReboot -Confirm:$false -Verbose 2>&1 |
+Write-Output 'Instalando KB{normalized}...'
+Get-WindowsUpdate -MicrosoftUpdate -KBArticleID {normalized} -Install -AcceptAll -IgnoreReboot -Confirm:$false -Verbose 2>&1 |
     ForEach-Object {{ Write-Output $_ }}
 ";
         var result = await _ps.RunAsync(script, onLine, ct);

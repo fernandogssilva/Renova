@@ -63,18 +63,28 @@ public sealed class CleanupService
         foreach (var item in items)
         {
             ct.ThrowIfCancellationRequested();
-            onLine?.Invoke($"Limpando {item.Name} ({item.SizeMB:N1} MB) em {item.Path}...");
+            onLine?.Invoke($"Limpando {item.Name} ({item.SizeMB:N1} MB) em {SanitizePath(item.Path)}...");
             try
             {
                 if (!Directory.Exists(item.Path)) continue;
+                if (IsReparsePoint(item.Path))
+                {
+                    onLine?.Invoke($"  [PULADO] {item.Name} é reparse point (symlink/junction)");
+                    continue;
+                }
                 var sizeBefore = TryMeasure(item.Path);
-                foreach (var f in Directory.EnumerateFiles(item.Path, "*", SearchOption.AllDirectories))
+                foreach (var f in SafeEnumerateFiles(item.Path))
                 {
                     try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch { }
                 }
                 foreach (var d in Directory.EnumerateDirectories(item.Path))
                 {
-                    try { Directory.Delete(d, true); } catch { }
+                    try
+                    {
+                        if (IsReparsePoint(d)) continue;
+                        Directory.Delete(d, true);
+                    }
+                    catch { }
                 }
                 var sizeAfter = TryMeasure(item.Path);
                 var delta = Math.Max(0, sizeBefore - sizeAfter);
@@ -135,6 +145,50 @@ Write-Output 'Disk Cleanup concluido.'
         }
         catch { }
         return null;
+    }
+
+    // SEGURANÇA: enumeração de arquivos que ignora reparse points para evitar
+    // ataques por junction/symlink apontando para dados sensíveis do usuário.
+    private static IEnumerable<string> SafeEnumerateFiles(string root)
+    {
+        var stack = new Stack<string>();
+        stack.Push(root);
+        while (stack.Count > 0)
+        {
+            var dir = stack.Pop();
+            IEnumerable<string> files = Array.Empty<string>();
+            IEnumerable<string> subs = Array.Empty<string>();
+            try { files = Directory.EnumerateFiles(dir); } catch { }
+            try
+            {
+                subs = Directory.EnumerateDirectories(dir).Where(d => !IsReparsePoint(d));
+            }
+            catch { }
+            foreach (var s in subs) stack.Push(s);
+            foreach (var f in files) yield return f;
+        }
+    }
+
+    private static bool IsReparsePoint(string path)
+    {
+        try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint; }
+        catch { return false; }
+    }
+
+    // Substitui C:\Users\<nome>\ por C:\Users\%USER%\ para não vazar identidade em logs.
+    internal static string SanitizePath(string p)
+    {
+        try
+        {
+            var user = Environment.UserName;
+            return string.IsNullOrEmpty(user)
+                ? p
+                : System.Text.RegularExpressions.Regex.Replace(
+                    p,
+                    @"(?i)\\Users\\" + System.Text.RegularExpressions.Regex.Escape(user) + @"\\",
+                    @"\Users\%USER%\");
+        }
+        catch { return p; }
     }
 
     private static double TryMeasure(string path)

@@ -100,22 +100,43 @@ public partial class MainViewModel : ObservableObject
             IsBusy = true;
             IsIndeterminate = false;
             Progress = 0;
-            StatusText = "Coletando informações...";
-            AppendLog("== Refresh iniciado ==");
+            StatusText = "Coletando informações em paralelo...";
+            AppendLog("== Refresh iniciado (execução paralela) ==");
 
-            await ScanCleanablesAsync(_cts.Token);
-            SetProgress(15, "Enumerando apps de inicialização...");
-            await ScanStartupAsync(_cts.Token);
-            SetProgress(28, "Consultando updates do Windows...");
-            await ScanWindowsUpdatesAsync(_cts.Token);
-            SetProgress(45, "Consultando atualizações de aplicativos (winget)...");
-            await ScanWingetAsync(_cts.Token);
-            SetProgress(60, "Analisando fragmentação dos discos...");
-            await ScanDrivesAsync(_cts.Token);
-            SetProgress(72, "Consultando catálogo oficial da Microsoft (release-health)...");
-            await ScanMicrosoftCatalogAsync(_cts.Token);
-            SetProgress(82, "Varrendo vulnerabilidades no MSRC (últimos 3 meses)...");
-            await ScanVulnerabilitiesAsync(3, _cts.Token);
+            // ARQUITETURA: scans independentes rodam em paralelo. O tempo total
+            // agora é o do scan mais lento (Vulnerabilidades ~15s), não a soma
+            // sequencial que passava de 45s.
+            var progressReporter = new Progress<int>(p => RunOnUi(() => Progress = p));
+            var progressLock = new object();
+            int completed = 0;
+            const int totalTasks = 7;
+
+            async Task RunStep(string label, Func<Task> action)
+            {
+                try
+                {
+                    RunOnUi(() => StatusText = label);
+                    await action();
+                }
+                finally
+                {
+                    int c;
+                    lock (progressLock) { c = ++completed; }
+                    ((IProgress<int>)progressReporter).Report((int)(c * 100.0 / totalTasks));
+                }
+            }
+
+            var tasks = new[]
+            {
+                RunStep("Mapeando alvos de limpeza...",           () => ScanCleanablesAsync(_cts.Token)),
+                RunStep("Enumerando apps de inicialização...",     () => ScanStartupAsync(_cts.Token)),
+                RunStep("Consultando updates do Windows...",       () => ScanWindowsUpdatesAsync(_cts.Token)),
+                RunStep("Consultando updates de apps (winget)...", () => ScanWingetAsync(_cts.Token)),
+                RunStep("Analisando fragmentação dos discos...",   () => ScanDrivesAsync(_cts.Token)),
+                RunStep("Consultando catálogo Microsoft...",       () => ScanMicrosoftCatalogAsync(_cts.Token)),
+                RunStep("Varrendo vulnerabilidades (MSRC)...",     () => ScanVulnerabilitiesAsync(3, _cts.Token)),
+            };
+            await Task.WhenAll(tasks);
 
             SetProgress(100, "Refresh concluído.");
             AppendLog("== Refresh finalizado ==");
