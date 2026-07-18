@@ -104,17 +104,17 @@ public partial class MainViewModel : ObservableObject
             AppendLog("== Refresh iniciado ==");
 
             await ScanCleanablesAsync(_cts.Token);
-            SetProgress(20, "Enumerando apps de inicialização...");
+            SetProgress(15, "Enumerando apps de inicialização...");
             await ScanStartupAsync(_cts.Token);
-            SetProgress(40, "Consultando updates do Windows...");
+            SetProgress(28, "Consultando updates do Windows...");
             await ScanWindowsUpdatesAsync(_cts.Token);
-            SetProgress(70, "Consultando atualizações de aplicativos (winget)...");
+            SetProgress(45, "Consultando atualizações de aplicativos (winget)...");
             await ScanWingetAsync(_cts.Token);
-            SetProgress(85, "Analisando fragmentação...");
+            SetProgress(60, "Analisando fragmentação dos discos...");
             await ScanDrivesAsync(_cts.Token);
-            SetProgress(92, "Consultando catálogo oficial da Microsoft...");
+            SetProgress(72, "Consultando catálogo oficial da Microsoft (release-health)...");
             await ScanMicrosoftCatalogAsync(_cts.Token);
-            SetProgress(97, "Varrendo vulnerabilidades (MSRC)...");
+            SetProgress(82, "Varrendo vulnerabilidades no MSRC (últimos 3 meses)...");
             await ScanVulnerabilitiesAsync(3, _cts.Token);
 
             SetProgress(100, "Refresh concluído.");

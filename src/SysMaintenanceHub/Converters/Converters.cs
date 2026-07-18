@@ -8,10 +8,19 @@ namespace SysMaintenanceHub.Converters;
 public sealed class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (value is bool b && b) ? Visibility.Visible : Visibility.Collapsed;
+    {
+        var b = value is bool bv && bv;
+        var invert = string.Equals(parameter?.ToString(), "inv", StringComparison.OrdinalIgnoreCase);
+        if (invert) b = !b;
+        return b ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is Visibility v && v == Visibility.Visible;
+    {
+        var visible = value is Visibility v && v == Visibility.Visible;
+        var invert = string.Equals(parameter?.ToString(), "inv", StringComparison.OrdinalIgnoreCase);
+        return invert ? !visible : visible;
+    }
 }
 
 public sealed class InverseBoolConverter : IValueConverter

@@ -68,9 +68,10 @@
                             </EventTrigger>
                         </Path.Triggers>
                     </Path>
-                    <Ellipse Width="14" Height="14" Canvas.Left="14" Canvas.Top="14"
-                             Fill="{DynamicResource AccentBrush}"
-                             Visibility="{Binding IsBusy, Converter={StaticResource B2V}, ConverterParameter=inv}"/>
+                    <Path Data="M 12 21 L 19 28 L 32 15" Stroke="{DynamicResource SuccessBrush}"
+                          StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                          Fill="Transparent"
+                          Visibility="{Binding IsBusy, Converter={StaticResource B2V}, ConverterParameter=inv}"/>
                 </Canvas>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
