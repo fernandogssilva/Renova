@@ -44,7 +44,7 @@ Name: "portuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "english";    MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon";     Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon";     Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
 Name: "startupentry";    Description: "Executar {#AppName} no login do Windows"; GroupDescription: "Integração"; Flags: unchecked
 

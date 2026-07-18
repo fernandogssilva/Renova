@@ -45,35 +45,53 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Spinner -->
-                <Canvas Grid.Column="0" Width="42" Height="42" Margin="0,0,14,0">
-                    <Ellipse Width="42" Height="42" Stroke="{DynamicResource Bg3Brush}" StrokeThickness="4"/>
-                    <Path Stroke="{DynamicResource AccentBrush}" StrokeThickness="4"
-                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                          Data="M 21 3 A 18 18 0 0 1 39 21"
-                          RenderTransformOrigin="0.5,0.5"
-                          Visibility="{Binding IsBusy, Converter={StaticResource B2V}}">
-                        <Path.RenderTransform>
-                            <RotateTransform x:Name="SpinT" Angle="0" CenterX="21" CenterY="21"/>
-                        </Path.RenderTransform>
-                        <Path.Triggers>
-                            <EventTrigger RoutedEvent="Path.Loaded">
+                <!-- Spinner / status indicator -->
+                <Grid Grid.Column="0" Width="48" Height="48" Margin="0,0,14,0">
+                    <!-- Trilha (dim ring) -->
+                    <Ellipse Width="48" Height="48" Stroke="{DynamicResource Bg2Brush}" StrokeThickness="5"/>
+
+                    <!-- Arco animado (visível quando IsBusy) -->
+                    <Grid Visibility="{Binding IsBusy, Converter={StaticResource B2V}}"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform x:Name="SpinT" Angle="0"/>
+                        </Grid.RenderTransform>
+                        <Grid.Triggers>
+                            <EventTrigger RoutedEvent="Grid.Loaded">
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="SpinT"
                                                          Storyboard.TargetProperty="Angle"
-                                                         From="0" To="360" Duration="0:0:1.1"
+                                                         From="0" To="360" Duration="0:0:0.9"
                                                          RepeatBehavior="Forever"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
-                        </Path.Triggers>
-                    </Path>
-                    <Path Data="M 12 21 L 19 28 L 32 15" Stroke="{DynamicResource SuccessBrush}"
+                        </Grid.Triggers>
+                        <!-- Arco principal (3/4 do círculo) com gradiente -->
+                        <Path StrokeThickness="5"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Data="M 24 2 A 22 22 0 1 1 4 32">
+                            <Path.Stroke>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#38BDF8" Offset="0"/>
+                                    <GradientStop Color="#818CF8" Offset="0.6"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Path.Stroke>
+                        </Path>
+                        <!-- Ponto brilhante no início do arco -->
+                        <Ellipse Width="7" Height="7" Fill="#38BDF8"
+                                 HorizontalAlignment="Center" VerticalAlignment="Top"
+                                 Margin="0,-2,0,0"/>
+                    </Grid>
+
+                    <!-- Check verde quando NÃO estiver ocupado -->
+                    <Path Data="M 14 24 L 22 32 L 34 18" Stroke="{DynamicResource SuccessBrush}"
                           StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Fill="Transparent"
                           Visibility="{Binding IsBusy, Converter={StaticResource B2V}, ConverterParameter=inv}"/>
-                </Canvas>
+                </Grid>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">

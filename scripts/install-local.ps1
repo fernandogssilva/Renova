@@ -20,15 +20,30 @@ Write-Host "Instalando em $InstallDir..." -ForegroundColor Cyan
 if (-not (Test-Path $InstallDir)) { New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null }
 Copy-Item -Path (Join-Path $publish '*') -Destination $InstallDir -Recurse -Force
 
-# Atalho no menu iniciar
+# Atalhos: Menu Iniciar + Desktop do usuário
 $startMenu = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\SysMaintenanceHub"
 if (-not (Test-Path $startMenu)) { New-Item -ItemType Directory -Force -Path $startMenu | Out-Null }
+
 $WshShell = New-Object -ComObject WScript.Shell
-$shortcut = $WshShell.CreateShortcut((Join-Path $startMenu 'SysMaintenanceHub.lnk'))
-$shortcut.TargetPath       = Join-Path $InstallDir $exeName
-$shortcut.WorkingDirectory = $InstallDir
-$shortcut.IconLocation     = Join-Path $InstallDir $exeName
-$shortcut.Save()
+
+# Menu Iniciar
+$lnkStart = $WshShell.CreateShortcut((Join-Path $startMenu 'Wintal.lnk'))
+$lnkStart.TargetPath       = Join-Path $InstallDir $exeName
+$lnkStart.WorkingDirectory = $InstallDir
+$lnkStart.IconLocation     = Join-Path $InstallDir $exeName
+$lnkStart.Description      = 'Wintal - A saude do seu Windows'
+$lnkStart.Save()
+
+# Desktop (perfil do usuário que executou o instalador; se elevado, usa o Public)
+$desktop = [Environment]::GetFolderPath('Desktop')
+if (-not (Test-Path $desktop)) { $desktop = [Environment]::GetFolderPath('CommonDesktopDirectory') }
+$lnkDesk = $WshShell.CreateShortcut((Join-Path $desktop 'Wintal.lnk'))
+$lnkDesk.TargetPath       = Join-Path $InstallDir $exeName
+$lnkDesk.WorkingDirectory = $InstallDir
+$lnkDesk.IconLocation     = Join-Path $InstallDir $exeName
+$lnkDesk.Description      = 'Wintal - A saude do seu Windows'
+$lnkDesk.Save()
+Write-Host "Atalho no desktop: $desktop\Wintal.lnk" -ForegroundColor Cyan
 
 # Registro de desinstalação
 $regBase = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\SysMaintenanceHub'
