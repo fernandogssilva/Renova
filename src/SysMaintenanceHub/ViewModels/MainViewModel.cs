@@ -82,6 +82,59 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<KbPendingItem> CatalogPending { get; } = new();
     public ObservableCollection<VulnerabilityItem> Vulnerabilities { get; } = new();
 
+    // Relatórios de varredura ao vivo (estilo CCleaner)
+    public ObservableCollection<ScanModuleReport> ScanReports { get; } = new();
+    private readonly Dictionary<string, ScanModuleReport> _reports = new();
+
+    private ScanModuleReport GetReport(string name, string actionHint = "")
+    {
+        if (_reports.TryGetValue(name, out var r)) return r;
+        r = new ScanModuleReport { Name = name, State = ScanState.Pending, ActionHint = actionHint };
+        _reports[name] = r;
+        RunOnUi(() => ScanReports.Add(r));
+        return r;
+    }
+
+    private void ReportStart(string name, string activity)
+    {
+        var r = GetReport(name);
+        RunOnUi(() => { r.State = ScanState.Running; r.CurrentActivity = activity; r.Progress = 0; r.FoundCount = 0; });
+    }
+
+    private void ReportProgress(string name, double pct, string activity, string lastItem = "")
+    {
+        var r = GetReport(name);
+        RunOnUi(() => {
+            r.Progress = pct;
+            r.CurrentActivity = activity;
+            if (!string.IsNullOrEmpty(lastItem)) r.LastFoundItem = lastItem;
+        });
+    }
+
+    private void ReportFound(string name, int totalFound, string lastItem = "")
+    {
+        var r = GetReport(name);
+        RunOnUi(() => { r.FoundCount = totalFound; if (!string.IsNullOrEmpty(lastItem)) r.LastFoundItem = lastItem; });
+    }
+
+    private void ReportDone(string name, int total, string actionHint)
+    {
+        var r = GetReport(name);
+        RunOnUi(() => {
+            r.State = ScanState.Done;
+            r.FoundCount = total;
+            r.Progress = 100;
+            r.ActionHint = actionHint;
+            r.CurrentActivity = $"{total} item(ns) encontrado(s)";
+        });
+    }
+
+    private void ReportFailed(string name, string message)
+    {
+        var r = GetReport(name);
+        RunOnUi(() => { r.State = ScanState.Failed; r.CurrentActivity = message; });
+    }
+
     // --- Commands ---
 
     [RelayCommand]
@@ -350,76 +403,166 @@ public partial class MainViewModel : ObservableObject
 
     private async Task ScanCleanablesAsync(CancellationToken ct)
     {
-        StatusText = "Mapeando alvos de limpeza...";
-        var items = await Task.Run(() => _cleanup.Enumerate(), ct);
-        RunOnUi(() =>
+        const string mod = "Limpeza de disco";
+        ReportStart(mod, "Mapeando pastas TEMP, cache de dev e navegador…");
+        try
         {
-            Cleanables.Clear();
-            foreach (var i in items) Cleanables.Add(i);
-            TotalCleanableMB = Math.Round(items.Sum(i => i.SizeMB), 1);
-        });
+            var items = await Task.Run(() => _cleanup.Enumerate(), ct);
+            RunOnUi(() =>
+            {
+                Cleanables.Clear();
+                foreach (var i in items)
+                {
+                    Cleanables.Add(i);
+                    ReportFound(mod, Cleanables.Count, $"{i.Name} — {i.SizeMB:N1} MB");
+                }
+                TotalCleanableMB = Math.Round(items.Sum(i => i.SizeMB), 1);
+            });
+            ReportDone(mod, items.Count,
+                $"{TotalCleanableMB:N1} MB podem ser liberados — botão 'Executar limpeza'");
+        }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); throw; }
     }
 
     private async Task ScanStartupAsync(CancellationToken ct)
     {
-        var apps = await Task.Run(() => _startup.List(), ct);
-        RunOnUi(() =>
+        const string mod = "Apps de inicialização";
+        ReportStart(mod, "Lendo Registry HKCU/HKLM Run + StartupApproved…");
+        try
         {
-            StartupApps.Clear();
-            foreach (var a in apps) StartupApps.Add(a);
-            StartupAppCount = apps.Count;
-        });
+            var apps = await Task.Run(() => _startup.List(), ct);
+            RunOnUi(() =>
+            {
+                StartupApps.Clear();
+                foreach (var a in apps)
+                {
+                    StartupApps.Add(a);
+                    ReportFound(mod, StartupApps.Count, a.Name);
+                }
+                StartupAppCount = apps.Count;
+            });
+            var disabled = apps.Count(a => !a.Enabled);
+            ReportDone(mod, apps.Count,
+                $"{apps.Count} apps ({disabled} desabilitado(s)) — aba Startup para alternar");
+        }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); throw; }
     }
 
     private async Task ScanWindowsUpdatesAsync(CancellationToken ct)
     {
-        var list = await _wu.ListPendingAsync(AppendLog, ct);
-        RunOnUi(() =>
+        const string mod = "Windows Update";
+        ReportStart(mod, "Consultando PSWindowsUpdate…");
+        try
         {
-            WindowsUpdates.Clear();
-            foreach (var u in list) WindowsUpdates.Add(u);
-            PendingWindowsUpdates = list.Count;
-            PendingSecurityUpdates = list.Count(u =>
-                u.Category.Contains("Security", StringComparison.OrdinalIgnoreCase) ||
-                u.Category.Contains("Segurança", StringComparison.OrdinalIgnoreCase));
-        });
+            var list = await _wu.ListPendingAsync(msg =>
+            {
+                AppendLog(msg);
+                ReportProgress(mod, 50, "Baixando lista de KBs pendentes…");
+            }, ct);
+            RunOnUi(() =>
+            {
+                WindowsUpdates.Clear();
+                foreach (var u in list)
+                {
+                    WindowsUpdates.Add(u);
+                    ReportFound(mod, WindowsUpdates.Count, $"{u.Kb} — {u.Title}");
+                }
+                PendingWindowsUpdates = list.Count;
+                PendingSecurityUpdates = list.Count(u =>
+                    u.Category.Contains("Security", StringComparison.OrdinalIgnoreCase) ||
+                    u.Category.Contains("Segurança", StringComparison.OrdinalIgnoreCase));
+            });
+            ReportDone(mod, list.Count,
+                list.Count == 0
+                    ? "Sistema em dia com o Windows Update"
+                    : $"{list.Count} pendente(s), {PendingSecurityUpdates} de segurança — botão 'Instalar todos'");
+        }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); throw; }
     }
 
     private async Task ScanWingetAsync(CancellationToken ct)
     {
-        var list = await _winget.ListUpgradesAsync(AppendLog, ct);
-        RunOnUi(() =>
+        const string mod = "Aplicativos (winget)";
+        ReportStart(mod, "Executando winget upgrade…");
+        try
         {
-            WingetUpdates.Clear();
-            foreach (var u in list) WingetUpdates.Add(u);
-            PendingApps = list.Count;
-        });
+            var list = await _winget.ListUpgradesAsync(AppendLog, ct);
+            RunOnUi(() =>
+            {
+                WingetUpdates.Clear();
+                foreach (var u in list)
+                {
+                    WingetUpdates.Add(u);
+                    ReportFound(mod, WingetUpdates.Count, $"{u.Name} {u.CurrentVersion} → {u.AvailableVersion}");
+                }
+                PendingApps = list.Count;
+            });
+            ReportDone(mod, list.Count,
+                list.Count == 0
+                    ? "Todos os apps monitorados pelo winget estão atualizados"
+                    : $"{list.Count} apps com update disponível — botão 'Atualizar tudo'");
+        }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); throw; }
     }
 
     private async Task ScanDrivesAsync(CancellationToken ct)
     {
-        var list = await _defrag.AnalyzeAsync(AppendLog, ct);
-        RunOnUi(() =>
+        const string mod = "Discos (defrag/TRIM)";
+        ReportStart(mod, "Analisando fragmentação com Optimize-Volume…");
+        try
         {
-            Drives.Clear();
-            foreach (var d in list) Drives.Add(d);
-            DriveInfoText = string.Join("  ·  ",
-                list.ConvertAll(d => $"{d.Drive} {d.FragmentationPercent:N0}%"));
-        });
+            var list = await _defrag.AnalyzeAsync(msg =>
+            {
+                AppendLog(msg);
+                ReportProgress(mod, 50, msg);
+            }, ct);
+            RunOnUi(() =>
+            {
+                Drives.Clear();
+                foreach (var d in list)
+                {
+                    Drives.Add(d);
+                    ReportFound(mod, Drives.Count, $"{d.Drive} — {d.FragmentationPercent:N0}% frag");
+                }
+                DriveInfoText = string.Join("  ·  ",
+                    list.ConvertAll(d => $"{d.Drive} {d.FragmentationPercent:N0}%"));
+            });
+            var needsDefrag = list.Count(d => d.FragmentationPercent > 10);
+            ReportDone(mod, list.Count,
+                needsDefrag == 0
+                    ? "Todos os drives em boa forma (< 10% frag)"
+                    : $"{needsDefrag} drive(s) precisam de desfrag — botão 'Otimizar'");
+        }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); throw; }
     }
 
     private async Task ScanVulnerabilitiesAsync(int monthsBack, CancellationToken ct)
     {
+        const string modMsrc  = "Vulnerabilidades (MSRC)";
+        const string modLocal = "Auditoria de segurança local";
+        ReportStart(modMsrc,  $"Baixando CVEs dos últimos {monthsBack} meses…");
+        ReportStart(modLocal, "12 verificações nativas (Defender, Firewall, SMBv1, RDP…)");
+
         var os = _catalog.GetCurrentOsBuild();
         var installed = await _catalog.GetInstalledKbsAsync(ct);
 
-        // Roda MSRC (CVEs remotas) e Local Audit em paralelo — combina no fim.
-        var msrcTask  = _vuln.ScanAsync(os, installed, monthsBack, AppendLog, ct);
-        var localTask = _localAudit.RunAuditAsync(AppendLog, ct);
-        await Task.WhenAll(msrcTask, localTask);
+        var msrcTask  = _vuln.ScanAsync(os, installed, monthsBack, msg =>
+        {
+            AppendLog(msg);
+            ReportProgress(modMsrc, 50, msg);
+        }, ct);
+        var localTask = _localAudit.RunAuditAsync(msg =>
+        {
+            AppendLog(msg);
+            ReportProgress(modLocal, 50, msg);
+        }, ct);
+
+        var msrcList  = await msrcTask;
+        var localList = await localTask;
+
         var combined = new List<VulnerabilityItem>();
-        combined.AddRange(await localTask); // local audit primeiro (mais acionável)
-        combined.AddRange(await msrcTask);
+        combined.AddRange(localList);
+        combined.AddRange(msrcList);
 
         RunOnUi(() =>
         {
@@ -433,13 +576,32 @@ public partial class MainViewModel : ObservableObject
                 ? "Nenhuma vulnerabilidade detectada."
                 : $"{CriticalVulnCount} crítica(s) · {TotalVulnCount} total (MSRC + Auditoria local)";
         });
+
+        var critMsrc  = msrcList.Count(v => v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
+        var critLocal = localList.Count(v => v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
+        ReportDone(modMsrc, msrcList.Count,
+            msrcList.Count == 0
+                ? "Nenhuma CVE Microsoft pendente"
+                : $"{msrcList.Count} CVE(s) — {critMsrc} crítica(s) — aba Vulnerabilidades");
+        ReportDone(modLocal, localList.Count,
+            localList.Count == 0
+                ? "Configuração de segurança OK"
+                : $"{localList.Count} misconfig — {critLocal} crítica(s) — clique 'Aplicar patch'");
     }
 
     private async Task ScanMicrosoftCatalogAsync(CancellationToken ct)
     {
-        var os = _catalog.GetCurrentOsBuild();
-        var installedKbs = await _catalog.GetInstalledKbsAsync(ct);
-        var latest = await _catalog.FetchLatestFromMicrosoftAsync(os, AppendLog, ct);
+        const string mod = "Catálogo Microsoft (release-health)";
+        ReportStart(mod, "Comparando build local vs. última KB publicada…");
+        try
+        {
+            var os = _catalog.GetCurrentOsBuild();
+            var installedKbs = await _catalog.GetInstalledKbsAsync(ct);
+            var latest = await _catalog.FetchLatestFromMicrosoftAsync(os, msg =>
+            {
+                AppendLog(msg);
+                ReportProgress(mod, 60, msg);
+            }, ct);
 
         RunOnUi(() =>
         {
@@ -480,6 +642,12 @@ public partial class MainViewModel : ObservableObject
             }
             AppendLog(CatalogStatus);
         });
+            ReportDone(mod, CatalogPending.Count,
+                CatalogHasPending
+                    ? $"Build oficial {LatestOfficialBuild} disponível — botão 'Instalar pendentes'"
+                    : "Sistema em dia com o catálogo oficial");
+        }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); throw; }
     }
 
     // --- Helpers ---

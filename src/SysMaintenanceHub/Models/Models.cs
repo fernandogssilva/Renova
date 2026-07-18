@@ -49,6 +49,51 @@ public sealed record KbPendingItem(
     string CatalogUrl,
     bool IsCritical);
 
+// --- Scan report (varredura ao vivo, estilo CCleaner) ---
+public enum ScanState { Pending, Running, Done, Failed }
+
+public sealed class ScanModuleReport : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+{
+    private string _name = "";
+    public string Name { get => _name; set => SetProperty(ref _name, value); }
+
+    private ScanState _state = ScanState.Pending;
+    public ScanState State { get => _state; set { SetProperty(ref _state, value); OnPropertyChanged(nameof(StateText)); OnPropertyChanged(nameof(StateColor)); } }
+
+    public string StateText => State switch
+    {
+        ScanState.Pending => "Aguardando",
+        ScanState.Running => "Analisando…",
+        ScanState.Done    => "Concluído",
+        ScanState.Failed  => "Falhou",
+        _ => ""
+    };
+
+    public string StateColor => State switch
+    {
+        ScanState.Pending => "#64748B",
+        ScanState.Running => "#38BDF8",
+        ScanState.Done    => "#22C55E",
+        ScanState.Failed  => "#EF4444",
+        _ => "#64748B"
+    };
+
+    private string _currentActivity = "";
+    public string CurrentActivity { get => _currentActivity; set => SetProperty(ref _currentActivity, value); }
+
+    private int _foundCount;
+    public int FoundCount { get => _foundCount; set => SetProperty(ref _foundCount, value); }
+
+    private double _progress;
+    public double Progress { get => _progress; set => SetProperty(ref _progress, value); }
+
+    private string _actionHint = "";
+    public string ActionHint { get => _actionHint; set => SetProperty(ref _actionHint, value); }
+
+    private string _lastFoundItem = "";
+    public string LastFoundItem { get => _lastFoundItem; set => SetProperty(ref _lastFoundItem, value); }
+}
+
 public sealed class MaintenanceSnapshot
 {
     public List<WindowsUpdateItem> WindowsUpdates { get; set; } = new();
