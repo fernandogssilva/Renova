@@ -1,0 +1,35 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Light theme -->
+    <Color x:Key="Bg0">#F8FAFC</Color>
+    <Color x:Key="Bg1">#FFFFFF</Color>
+    <Color x:Key="Bg2">#F1F5F9</Color>
+    <Color x:Key="Bg3">#E2E8F0</Color>
+    <Color x:Key="Fg0">#0F172A</Color>
+    <Color x:Key="Fg1">#1E293B</Color>
+    <Color x:Key="Fg2">#475569</Color>
+    <Color x:Key="Fg3">#94A3B8</Color>
+    <Color x:Key="Accent">#0284C7</Color>
+    <Color x:Key="AccentAlt">#4F46E5</Color>
+    <Color x:Key="Success">#16A34A</Color>
+    <Color x:Key="Warning">#D97706</Color>
+    <Color x:Key="Danger">#DC2626</Color>
+    <Color x:Key="LogBg">#0F172A</Color>
+
+    <SolidColorBrush x:Key="Bg0Brush" Color="{StaticResource Bg0}"/>
+    <SolidColorBrush x:Key="Bg1Brush" Color="{StaticResource Bg1}"/>
+    <SolidColorBrush x:Key="Bg2Brush" Color="{StaticResource Bg2}"/>
+    <SolidColorBrush x:Key="Bg3Brush" Color="{StaticResource Bg3}"/>
+    <SolidColorBrush x:Key="Fg0Brush" Color="{StaticResource Fg0}"/>
+    <SolidColorBrush x:Key="Fg1Brush" Color="{StaticResource Fg1}"/>
+    <SolidColorBrush x:Key="Fg2Brush" Color="{StaticResource Fg2}"/>
+    <SolidColorBrush x:Key="Fg3Brush" Color="{StaticResource Fg3}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Accent}"/>
+    <SolidColorBrush x:Key="AccentAltBrush" Color="{StaticResource AccentAlt}"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource Danger}"/>
+    <SolidColorBrush x:Key="LogBgBrush" Color="{StaticResource LogBg}"/>
+
+</ResourceDictionary>
