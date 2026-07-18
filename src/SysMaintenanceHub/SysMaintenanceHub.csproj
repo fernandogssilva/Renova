@@ -10,7 +10,7 @@
     <RootNamespace>SysMaintenanceHub</RootNamespace>
     <AssemblyName>SysMaintenanceHub</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon></ApplicationIcon>
+    <ApplicationIcon>Assets\Wintal.ico</ApplicationIcon>
     <Version>1.0.0</Version>
     <FileVersion>1.0.0.0</FileVersion>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>

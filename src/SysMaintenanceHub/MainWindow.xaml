@@ -7,7 +7,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="SysMaintenanceHub — Manutenção e Atualizações"
+        Title="Wintal — A saúde do seu Windows"
+        Icon="Assets/Wintal.ico"
         Height="820" Width="1280"
         MinHeight="600" MinWidth="1000"
         WindowStartupLocation="CenterScreen"
@@ -75,10 +76,15 @@
                 </Canvas>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="SysMaintenanceHub" FontSize="22" FontWeight="Bold"
-                               Foreground="{DynamicResource Fg0Brush}"/>
-                    <TextBlock Text="{Binding StatusText}" FontSize="13"
-                               Foreground="{DynamicResource Fg2Brush}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Wintal" FontSize="24" FontWeight="Bold"
+                                   Foreground="{DynamicResource Fg0Brush}"/>
+                        <TextBlock Text="a saúde do seu Windows" FontSize="13"
+                                   Foreground="{DynamicResource Fg2Brush}"
+                                   Margin="10,0,0,0" VerticalAlignment="Bottom"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding StatusText}" FontSize="12"
+                               Foreground="{DynamicResource Fg3Brush}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -538,7 +544,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg2Brush}" FontSize="12"/>
                 <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                           Text="SysMaintenanceHub · v1.0 · DataSec"/>
+                           Text="Wintal · v1.4 · by DataSec"/>
             </Grid>
         </Border>
     </Grid>
