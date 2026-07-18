@@ -249,7 +249,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Aplicativos (winget)">
+            <TabItem Header="Atualizações pendentes">
                 <Grid Margin="0,10,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
