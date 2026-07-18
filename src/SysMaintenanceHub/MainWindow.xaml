@@ -428,11 +428,11 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="CVSS"  Binding="{Binding CvssScore, StringFormat={}{0:N1}}" Width="70"/>
-                            <DataGridTextColumn Header="CVE"   Binding="{Binding Cve}"                              Width="140"/>
-                            <DataGridTextColumn Header="KB"    Binding="{Binding Kb}"                               Width="110"/>
-                            <DataGridTextColumn Header="Título" Binding="{Binding Title}"                           Width="*"/>
-                            <DataGridTextColumn Header="Publicado" Binding="{Binding ReleaseDate, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+                            <DataGridTextColumn Header="CVSS"  Binding="{Binding CvssScore, StringFormat={}{0:N1}}" Width="60"/>
+                            <DataGridTextColumn Header="ID"    Binding="{Binding Cve}"                              Width="150"/>
+                            <DataGridTextColumn Header="Correção / KB" Binding="{Binding Kb}"                       Width="220"/>
+                            <DataGridTextColumn Header="Título / Descrição" Binding="{Binding Title}"               Width="*"/>
+                            <DataGridTextColumn Header="Detectado" Binding="{Binding ReleaseDate, StringFormat={}{0:dd/MM/yyyy}}" Width="95"/>
                             <DataGridTemplateColumn Header="Ações" Width="280">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>

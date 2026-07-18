@@ -21,6 +21,7 @@ public partial class MainViewModel : ObservableObject
     private readonly StartupAppsService _startup;
     private readonly MicrosoftCatalogService _catalog;
     private readonly VulnerabilityService _vuln;
+    private readonly LocalSecurityAuditService _localAudit;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
     private CancellationTokenSource? _cts;
@@ -35,6 +36,7 @@ public partial class MainViewModel : ObservableObject
         _startup = new StartupAppsService();
         _catalog = new MicrosoftCatalogService(ps);
         _vuln = new VulnerabilityService(_catalog);
+        _localAudit = new LocalSecurityAuditService(ps);
 
         AppTheme = ThemeManager.Current == Services.AppTheme.Dark ? "Dark" : "Light";
         LastCleanupText = FormatLastCleanup(_cleanup.LastCleanup());
@@ -410,18 +412,26 @@ public partial class MainViewModel : ObservableObject
     {
         var os = _catalog.GetCurrentOsBuild();
         var installed = await _catalog.GetInstalledKbsAsync(ct);
-        var vulns = await _vuln.ScanAsync(os, installed, monthsBack, AppendLog, ct);
+
+        // Roda MSRC (CVEs remotas) e Local Audit em paralelo — combina no fim.
+        var msrcTask  = _vuln.ScanAsync(os, installed, monthsBack, AppendLog, ct);
+        var localTask = _localAudit.RunAuditAsync(AppendLog, ct);
+        await Task.WhenAll(msrcTask, localTask);
+        var combined = new List<VulnerabilityItem>();
+        combined.AddRange(await localTask); // local audit primeiro (mais acionável)
+        combined.AddRange(await msrcTask);
+
         RunOnUi(() =>
         {
             Vulnerabilities.Clear();
-            foreach (var v in vulns) Vulnerabilities.Add(v);
-            TotalVulnCount = vulns.Count;
-            CriticalVulnCount = vulns.Count(v =>
+            foreach (var v in combined) Vulnerabilities.Add(v);
+            TotalVulnCount = combined.Count;
+            CriticalVulnCount = combined.Count(v =>
                 v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
             VulnCheckedAt = DateTime.Now;
-            VulnScanStatus = vulns.Count == 0
-                ? "Nenhuma vulnerabilidade pendente detectada nos últimos meses."
-                : $"{CriticalVulnCount} crítica(s) · {TotalVulnCount} pendente(s) — aba Vulnerabilidades.";
+            VulnScanStatus = combined.Count == 0
+                ? "Nenhuma vulnerabilidade detectada."
+                : $"{CriticalVulnCount} crítica(s) · {TotalVulnCount} total (MSRC + Auditoria local)";
         });
     }
 

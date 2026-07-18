@@ -48,16 +48,26 @@ public sealed class PowerShellRunner
         return dir;
     }
 
+    // Prelude UTF-8: força PowerShell.exe a emitir output em UTF-8 (padrão é cp850/cp1252
+    // dependendo da locale, causando ??? em acentos portugueses).
+    private const string UtF8Prelude = @"
+$OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+try { $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8' } catch {}
+chcp 65001 > $null 2>&1
+";
+
     public async Task<PsResult> RunAsync(
         string script,
         Action<string>? onLine = null,
         CancellationToken ct = default)
     {
         var scriptFile = Path.Combine(ScriptDir, $"smh_{Guid.NewGuid():N}.ps1");
+        var withPrelude = UtF8Prelude + script;
         // Write com FileShare.None para evitar substituição concorrente
         await using (var fs = new FileStream(scriptFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
         {
-            var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(script);
+            var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(withPrelude);
             await fs.WriteAsync(bytes, ct).ConfigureAwait(false);
         }
 

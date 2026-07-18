@@ -52,7 +52,15 @@ $u = Get-WindowsUpdate -MicrosoftUpdate -ErrorAction SilentlyContinue
 if (-not $u) { return }
 foreach ($x in $u) {
     $kb   = ($x.KB | Select-Object -First 1)
-    $cat  = ($x.Categories -join '; ')
+    # Categories é IUpdateCategoryCollection (COM). Cada item tem .Name.
+    $catNames = @()
+    try {
+        foreach ($c in $x.Categories) {
+            if ($c -and $c.Name) { $catNames += $c.Name }
+        }
+    } catch {}
+    $cat = ($catNames -join '; ')
+    if (-not $cat) { $cat = 'Update' }
     $size = if ($x.Size) { [math]::Round($x.Size/1MB,2) } else { 0 }
     ""KB={0}|TITLE={1}|CAT={2}|SIZE={3}"" -f $kb, ($x.Title -replace '\|','/'), $cat, $size
 }
