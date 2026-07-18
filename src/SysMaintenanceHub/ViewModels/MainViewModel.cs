@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
     private readonly CleanupService _cleanup;
     private readonly DefragService _defrag;
     private readonly StartupAppsService _startup;
+    private readonly MicrosoftCatalogService _catalog;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
     private CancellationTokenSource? _cts;
@@ -31,6 +32,7 @@ public partial class MainViewModel : ObservableObject
         _cleanup = new CleanupService(ps);
         _defrag = new DefragService(ps);
         _startup = new StartupAppsService();
+        _catalog = new MicrosoftCatalogService(ps);
 
         AppTheme = ThemeManager.Current == Services.AppTheme.Dark ? "Dark" : "Light";
         LastCleanupText = FormatLastCleanup(_cleanup.LastCleanup());
@@ -55,12 +57,20 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _lastCleanupText = "—";
     [ObservableProperty] private string _driveInfoText = "—";
 
+    [ObservableProperty] private string _currentOsBuild = "—";
+    [ObservableProperty] private string _latestOfficialKb = "—";
+    [ObservableProperty] private string _latestOfficialBuild = "—";
+    [ObservableProperty] private string _catalogStatus = "Aguardando consulta";
+    [ObservableProperty] private bool _catalogHasPending;
+    [ObservableProperty] private DateTime? _catalogCheckedAt;
+
     public ObservableCollection<WindowsUpdateItem> WindowsUpdates { get; } = new();
     public ObservableCollection<WingetUpdateItem> WingetUpdates { get; } = new();
     public ObservableCollection<StartupApp> StartupApps { get; } = new();
     public ObservableCollection<DriveDefragInfo> Drives { get; } = new();
     public ObservableCollection<CleanableItem> Cleanables { get; } = new();
     public ObservableCollection<string> LogLines { get; } = new();
+    public ObservableCollection<KbPendingItem> CatalogPending { get; } = new();
 
     // --- Commands ---
 
@@ -92,8 +102,10 @@ public partial class MainViewModel : ObservableObject
             await ScanWindowsUpdatesAsync(_cts.Token);
             SetProgress(70, "Consultando atualizações de aplicativos (winget)...");
             await ScanWingetAsync(_cts.Token);
-            SetProgress(90, "Analisando fragmentação...");
+            SetProgress(85, "Analisando fragmentação...");
             await ScanDrivesAsync(_cts.Token);
+            SetProgress(95, "Consultando catálogo oficial da Microsoft...");
+            await ScanMicrosoftCatalogAsync(_cts.Token);
 
             SetProgress(100, "Refresh concluído.");
             AppendLog("== Refresh finalizado ==");
@@ -229,6 +241,33 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task CheckMicrosoftCatalogAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, "Consultando catálogo oficial da Microsoft...");
+            await ScanMicrosoftCatalogAsync(_cts.Token);
+            StatusText = CatalogStatus;
+        }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private void OpenCatalogUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex) { AppendLog($"Não foi possível abrir {url}: {ex.Message}"); }
+    }
+
+    [RelayCommand]
     private void Cancel() => _cts?.Cancel();
 
     [RelayCommand]
@@ -297,6 +336,53 @@ public partial class MainViewModel : ObservableObject
             foreach (var d in list) Drives.Add(d);
             DriveInfoText = string.Join("  ·  ",
                 list.ConvertAll(d => $"{d.Drive} {d.FragmentationPercent:N0}%"));
+        });
+    }
+
+    private async Task ScanMicrosoftCatalogAsync(CancellationToken ct)
+    {
+        var os = _catalog.GetCurrentOsBuild();
+        var installedKbs = await _catalog.GetInstalledKbsAsync(ct);
+        var latest = await _catalog.FetchLatestFromMicrosoftAsync(os, AppendLog, ct);
+
+        RunOnUi(() =>
+        {
+            CurrentOsBuild = $"{os.ProductName} {os.DisplayVersion} · Build {os.Build}.{os.UBR}";
+            CatalogCheckedAt = DateTime.Now;
+            CatalogPending.Clear();
+
+            if (latest is null)
+            {
+                LatestOfficialKb = "n/d";
+                LatestOfficialBuild = "n/d";
+                CatalogStatus = "Não foi possível ler a página oficial (ver logs).";
+                CatalogHasPending = false;
+                return;
+            }
+
+            LatestOfficialKb = latest.Kb;
+            LatestOfficialBuild = latest.BuildString;
+
+            bool alreadyInstalled = installedKbs.Contains(latest.Kb, StringComparer.OrdinalIgnoreCase);
+            bool buildIsCurrent = os.UBR >= latest.BuildMinor && os.Build >= latest.BuildMajor;
+
+            if (alreadyInstalled || buildIsCurrent)
+            {
+                CatalogHasPending = false;
+                CatalogStatus = $"Sistema em dia — {latest.Kb} (build {latest.BuildString}) já aplicada.";
+            }
+            else
+            {
+                CatalogHasPending = true;
+                CatalogStatus = $"PENDENTE: {latest.Kb} — sua build {os.Build}.{os.UBR} < oficial {latest.BuildString}";
+                CatalogPending.Add(new KbPendingItem(
+                    Kb: latest.Kb,
+                    BuildString: latest.BuildString,
+                    PublishedAt: latest.PublishedAt,
+                    CatalogUrl: latest.CatalogUrl,
+                    IsCritical: true));
+            }
+            AppendLog(CatalogStatus);
         });
     }
 

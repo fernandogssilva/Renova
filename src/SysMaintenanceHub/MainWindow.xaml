@@ -26,11 +26,13 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Header -->
-            <RowDefinition Height="Auto"/>  <!-- Progress -->
-            <RowDefinition Height="Auto"/>  <!-- KPI cards -->
-            <RowDefinition Height="*"/>     <!-- Main tabs -->
-            <RowDefinition Height="Auto"/>  <!-- Footer -->
+            <RowDefinition Height="Auto"/>  <!-- 0 Header -->
+            <RowDefinition Height="Auto"/>  <!-- 1 Progress -->
+            <RowDefinition Height="Auto"/>  <!-- 2 KPI cards -->
+            <RowDefinition Height="Auto"/>  <!-- 3 Catálogo Microsoft -->
+            <RowDefinition Height="*"/>     <!-- 4 Main tabs -->
+            <RowDefinition Height="Auto"/>  <!-- 5 Footer -->
+            <RowDefinition Height="0"/>     <!-- 6 reservado -->
         </Grid.RowDefinitions>
 
         <!-- Header -->
@@ -167,8 +169,55 @@
             </Border>
         </Grid>
 
+        <!-- Row 3: Catálogo Microsoft -->
+        <Border Grid.Row="3" Margin="18,12,18,0" Style="{StaticResource CardBorder}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Ellipse Grid.Column="0" Width="12" Height="12" Margin="0,0,10,0"
+                         VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CatalogHasPending}" Value="True">
+                                    <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Catálogo Microsoft (release-health)" Style="{StaticResource CardTitle}"/>
+                    <TextBlock Text="{Binding CatalogStatus}" Style="{StaticResource CardCaption}"
+                               FontSize="12.5" Margin="0,4,0,0"/>
+                    <TextBlock Margin="0,2,0,0" FontSize="11" Foreground="{DynamicResource Fg3Brush}">
+                        <Run Text="Local:"/>
+                        <Run Text="{Binding CurrentOsBuild}"/>
+                        <Run Text=" · Oficial:"/>
+                        <Run Text="{Binding LatestOfficialKb}"/>
+                        <Run Text="("/><Run Text="{Binding LatestOfficialBuild}"/><Run Text=")"/>
+                    </TextBlock>
+                </StackPanel>
+                <Button Grid.Column="2" Content="Verificar catálogo agora"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding CheckMicrosoftCatalogCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                        Margin="8,0,8,0" VerticalAlignment="Center"/>
+                <Button Grid.Column="3" Content="Instalar pendentes"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding InstallWindowsUpdatesCommand}"
+                        IsEnabled="{Binding CatalogHasPending}"
+                        VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
         <!-- Main tabs -->
-        <TabControl Grid.Row="3" Margin="18,18,18,0"
+        <TabControl Grid.Row="4" Margin="18,18,18,0"
                     Background="Transparent" BorderThickness="0"
                     Foreground="{DynamicResource Fg1Brush}">
 
@@ -310,6 +359,58 @@
                 </Grid>
             </TabItem>
 
+            <TabItem Header="Catálogo Microsoft">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Consultar catálogo agora" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding CheckMicrosoftCatalogCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                        <Button Content="Instalar pendentes" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding InstallWindowsUpdatesCommand}"
+                                IsEnabled="{Binding CatalogHasPending}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Margin="0,0,0,8" Foreground="{DynamicResource Fg2Brush}" FontSize="12">
+                        <Run Text="Comparação: sua build"/>
+                        <Run Text="{Binding CurrentOsBuild}" FontWeight="SemiBold"/>
+                        <Run Text=" vs. última publicada pela Microsoft (KB"/>
+                        <Run Text="{Binding LatestOfficialKb}"/>
+                        <Run Text=", build"/>
+                        <Run Text="{Binding LatestOfficialBuild}"/>
+                        <Run Text=")."/>
+                    </TextBlock>
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding CatalogPending}"
+                              AutoGenerateColumns="False" HeadersVisibility="Column"
+                              CanUserAddRows="False" GridLinesVisibility="None"
+                              Background="{DynamicResource Bg1Brush}"
+                              RowBackground="{DynamicResource Bg1Brush}"
+                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
+                              Foreground="{DynamicResource Fg1Brush}"
+                              BorderThickness="0" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="KB"         Binding="{Binding Kb}"            Width="120"/>
+                            <DataGridTextColumn Header="Build"      Binding="{Binding BuildString}"   Width="120"/>
+                            <DataGridTextColumn Header="Publicado"  Binding="{Binding PublishedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
+                            <DataGridTemplateColumn Header="Catálogo (Microsoft)" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Abrir no site da Microsoft"
+                                                Style="{StaticResource SecondaryButton}"
+                                                Padding="10,4" HorizontalAlignment="Left"
+                                                Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding CatalogUrl}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="Logs">
                 <Grid Margin="0,10,0,0">
                     <Grid.RowDefinitions>
@@ -338,7 +439,7 @@
         </TabControl>
 
         <!-- Footer -->
-        <Border Grid.Row="4" Background="{DynamicResource Bg1Brush}" Padding="18,10">
+        <Border Grid.Row="5" Background="{DynamicResource Bg1Brush}" Padding="18,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

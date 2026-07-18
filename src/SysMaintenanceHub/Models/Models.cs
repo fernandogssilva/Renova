@@ -13,6 +13,30 @@ public sealed record DriveDefragInfo(string Drive, double FragmentationPercent, 
 
 public sealed record CleanableItem(string Name, double SizeMB, string Path);
 
+public sealed record OsBuildInfo(
+    string ProductName,
+    string EditionId,
+    string DisplayVersion,
+    int Build,
+    int UBR,
+    string FullVersion,
+    bool IsWindows11);
+
+public sealed record LatestKbFromCatalog(
+    string Kb,
+    int BuildMajor,
+    int BuildMinor,
+    string BuildString,
+    DateTime PublishedAt,
+    string CatalogUrl);
+
+public sealed record KbPendingItem(
+    string Kb,
+    string BuildString,
+    DateTime PublishedAt,
+    string CatalogUrl,
+    bool IsCritical);
+
 public sealed class MaintenanceSnapshot
 {
     public List<WindowsUpdateItem> WindowsUpdates { get; set; } = new();
