@@ -214,30 +214,82 @@ public partial class MainViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            SetProgress(0, "Instalando atualizações de apps...");
-            AppendLog("== Manutenção completa iniciada ==");
+            SetProgress(0, "Manutenção completa: iniciando...");
+            AppendLog("========================================");
+            AppendLog("== INICIO Manutencao completa ==");
+            AppendLog($"== {DateTime.Now:yyyy-MM-dd HH:mm:ss} ==");
+            AppendLog("========================================");
+            _log.Information("== INICIO Manutencao completa ==");
 
-            await _winget.UpgradeAllAsync(AppendLog, _cts.Token);
-            SetProgress(30, "Atualizando Windows...");
-            await _wu.InstallAllAsync(AppendLog, _cts.Token);
-            SetProgress(60, "Limpando arquivos temporários...");
-            var freed = await _cleanup.CleanAsync(Cleanables.ToList(), AppendLog, _cts.Token);
-            AppendLog($"Total liberado (varredura direta): {freed:N1} MB");
-            SetProgress(80, "Executando Disk Cleanup do Windows...");
-            await _cleanup.RunDiskCleanupAsync(AppendLog, _cts.Token);
+            // 1. Winget (etapa mais longa e propensa a fechar apps por conta própria)
+            await SafeStepAsync("Winget upgrade --all", 15, async () =>
+            {
+                await _winget.UpgradeAllAsync(AppendLog, _cts.Token);
+            });
+
+            // 2. Windows Update
+            await SafeStepAsync("Windows Update install", 45, async () =>
+            {
+                await _wu.InstallAllAsync(AppendLog, _cts.Token);
+            });
+
+            // 3. Limpeza direta
+            await SafeStepAsync("Limpeza de TEMP e caches", 70, async () =>
+            {
+                var freed = await _cleanup.CleanAsync(Cleanables.ToList(), AppendLog, _cts.Token);
+                AppendLog($"Total liberado: {freed:N1} MB");
+            });
+
+            // 4. Disk Cleanup (cleanmgr) — separado por ser processo externo que pode
+            //    abrir dialog. Envolvo em try isolado para não abortar o resto.
+            await SafeStepAsync("cleanmgr /sagerun:99", 85, async () =>
+            {
+                await _cleanup.RunDiskCleanupAsync(AppendLog, _cts.Token);
+            });
+
+            // 5. Refresh final para atualizar KPIs
             SetProgress(95, "Atualizando snapshot...");
             await RefreshAllAsync();
-            SetProgress(100, "Manutenção concluída.");
-            AppendLog("== Manutenção completa finalizada ==");
+
+            SetProgress(100, "Manutenção completa finalizada.");
+            AppendLog("== FIM Manutencao completa ==");
+            _log.Information("== FIM Manutencao completa ==");
         }
-        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; AppendLog("== CANCELADO ==");  }
         catch (Exception ex)
         {
             _log.Error(ex, "Falha na manutenção");
-            AppendLog($"ERRO: {ex.Message}");
+            AppendLog($"ERRO FATAL: {ex.Message}");
             StatusText = "Falha — ver logs.";
         }
         finally { IsBusy = false; }
+    }
+
+    /// <summary>
+    /// Envolve uma etapa da manutenção com logging estruturado ANTES/DEPOIS
+    /// para diagnóstico. Falha de uma etapa NÃO aborta as outras.
+    /// </summary>
+    private async Task SafeStepAsync(string stepName, double progressPct, Func<Task> action)
+    {
+        SetProgress(progressPct, $"Executando: {stepName}...");
+        var start = DateTime.Now;
+        AppendLog($">>> INICIO etapa: {stepName} ({start:HH:mm:ss})");
+        _log.Information("Etapa {Step} iniciada", stepName);
+        try
+        {
+            await action();
+            var dur = (DateTime.Now - start).TotalSeconds;
+            AppendLog($"<<< FIM etapa: {stepName} — {dur:N1}s");
+            _log.Information("Etapa {Step} concluida em {Seconds:F1}s", stepName, dur);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            var dur = (DateTime.Now - start).TotalSeconds;
+            AppendLog($"!!! FALHA na etapa: {stepName} — {ex.Message}");
+            _log.Error(ex, "Etapa {Step} falhou apos {Seconds:F1}s", stepName, dur);
+            // NÃO relança - deixa as próximas etapas rodarem
+        }
     }
 
     [RelayCommand]
