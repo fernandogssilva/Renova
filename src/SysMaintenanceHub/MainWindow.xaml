@@ -162,9 +162,16 @@
 
             <Border Grid.Column="5" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="Fragmentação" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding DriveInfoText}" Style="{StaticResource CardCaption}"
-                               FontSize="13" Margin="0,6,0,0"/>
+                    <TextBlock Text="Vulnerabilidades" Style="{StaticResource CardTitle}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding CriticalVulnCount}" Style="{StaticResource CardValue}"
+                                   Foreground="{DynamicResource DangerBrush}"/>
+                        <TextBlock Text="{Binding TotalVulnCount, StringFormat=' / {0}'}"
+                                   Style="{StaticResource CardValue}"
+                                   FontSize="18" VerticalAlignment="Bottom"
+                                   Foreground="{DynamicResource Fg2Brush}"/>
+                    </StackPanel>
+                    <TextBlock Text="críticas / total (MSRC)" Style="{StaticResource CardCaption}"/>
                 </StackPanel>
             </Border>
         </Grid>
@@ -354,6 +361,85 @@
                             <DataGridTextColumn Header="Drive"           Binding="{Binding Drive}"                                          Width="80"/>
                             <DataGridTextColumn Header="Fragmentação (%)" Binding="{Binding FragmentationPercent, StringFormat={}{0:N0}}"  Width="160"/>
                             <DataGridTextColumn Header="Último defrag"    Binding="{Binding LastDefrag, StringFormat={}{0:dd/MM/yyyy}}"    Width="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Vulnerabilidades">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Varrer MSRC agora" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RunVulnScanCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Foreground="{DynamicResource Fg2Brush}" FontSize="12" Margin="0,0,0,8">
+                        <Run Text="Fonte: MSRC CVRF API — https://api.msrc.microsoft.com/cvrf/v3.0"/>
+                        <LineBreak/>
+                        <Run Text="Status:"/><Run Text="{Binding VulnScanStatus}" FontWeight="SemiBold"/>
+                    </TextBlock>
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Vulnerabilities}"
+                              AutoGenerateColumns="False" HeadersVisibility="Column"
+                              CanUserAddRows="False" GridLinesVisibility="None"
+                              Background="{DynamicResource Bg1Brush}"
+                              RowBackground="{DynamicResource Bg1Brush}"
+                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
+                              Foreground="{DynamicResource Fg1Brush}"
+                              BorderThickness="0" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Severidade" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{DynamicResource Bg3Brush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                                                            <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Severity}" Value="Important">
+                                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Severity}" Value="Moderate">
+                                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Severity}" Foreground="White" FontWeight="SemiBold" FontSize="11"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="CVSS"  Binding="{Binding CvssScore, StringFormat={}{0:N1}}" Width="70"/>
+                            <DataGridTextColumn Header="CVE"   Binding="{Binding Cve}"                              Width="140"/>
+                            <DataGridTextColumn Header="KB"    Binding="{Binding Kb}"                               Width="110"/>
+                            <DataGridTextColumn Header="Título" Binding="{Binding Title}"                           Width="*"/>
+                            <DataGridTextColumn Header="Publicado" Binding="{Binding ReleaseDate, StringFormat={}{0:dd/MM/yyyy}}" Width="110"/>
+                            <DataGridTemplateColumn Header="Ações" Width="280">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Aplicar patch" Style="{StaticResource PrimaryButton}"
+                                                    Padding="10,4" Margin="0,0,4,0"
+                                                    Command="{Binding DataContext.ApplyPatchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="MSRC" Style="{StaticResource SecondaryButton}" Padding="10,4" Margin="0,0,4,0"
+                                                    Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding MsrcUrl}"/>
+                                            <Button Content="Catálogo" Style="{StaticResource SecondaryButton}" Padding="10,4"
+                                                    Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding CatalogUrl}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

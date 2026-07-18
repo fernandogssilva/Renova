@@ -30,6 +30,18 @@ public sealed record LatestKbFromCatalog(
     DateTime PublishedAt,
     string CatalogUrl);
 
+public sealed record VulnerabilityItem(
+    string Cve,
+    string Title,
+    string Severity,
+    double CvssScore,
+    string Kb,
+    string ProductName,
+    string Description,
+    string MsrcUrl,
+    string CatalogUrl,
+    DateTime ReleaseDate);
+
 public sealed record KbPendingItem(
     string Kb,
     string BuildString,

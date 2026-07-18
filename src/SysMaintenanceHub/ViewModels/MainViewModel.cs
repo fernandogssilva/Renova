@@ -20,6 +20,7 @@ public partial class MainViewModel : ObservableObject
     private readonly DefragService _defrag;
     private readonly StartupAppsService _startup;
     private readonly MicrosoftCatalogService _catalog;
+    private readonly VulnerabilityService _vuln;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
     private CancellationTokenSource? _cts;
@@ -33,6 +34,7 @@ public partial class MainViewModel : ObservableObject
         _defrag = new DefragService(ps);
         _startup = new StartupAppsService();
         _catalog = new MicrosoftCatalogService(ps);
+        _vuln = new VulnerabilityService(_catalog);
 
         AppTheme = ThemeManager.Current == Services.AppTheme.Dark ? "Dark" : "Light";
         LastCleanupText = FormatLastCleanup(_cleanup.LastCleanup());
@@ -64,6 +66,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _catalogHasPending;
     [ObservableProperty] private DateTime? _catalogCheckedAt;
 
+    [ObservableProperty] private int _criticalVulnCount;
+    [ObservableProperty] private int _totalVulnCount;
+    [ObservableProperty] private string _vulnScanStatus = "Nenhuma varredura executada";
+    [ObservableProperty] private DateTime? _vulnCheckedAt;
+
     public ObservableCollection<WindowsUpdateItem> WindowsUpdates { get; } = new();
     public ObservableCollection<WingetUpdateItem> WingetUpdates { get; } = new();
     public ObservableCollection<StartupApp> StartupApps { get; } = new();
@@ -71,6 +78,7 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<CleanableItem> Cleanables { get; } = new();
     public ObservableCollection<string> LogLines { get; } = new();
     public ObservableCollection<KbPendingItem> CatalogPending { get; } = new();
+    public ObservableCollection<VulnerabilityItem> Vulnerabilities { get; } = new();
 
     // --- Commands ---
 
@@ -104,8 +112,10 @@ public partial class MainViewModel : ObservableObject
             await ScanWingetAsync(_cts.Token);
             SetProgress(85, "Analisando fragmentação...");
             await ScanDrivesAsync(_cts.Token);
-            SetProgress(95, "Consultando catálogo oficial da Microsoft...");
+            SetProgress(92, "Consultando catálogo oficial da Microsoft...");
             await ScanMicrosoftCatalogAsync(_cts.Token);
+            SetProgress(97, "Varrendo vulnerabilidades (MSRC)...");
+            await ScanVulnerabilitiesAsync(3, _cts.Token);
 
             SetProgress(100, "Refresh concluído.");
             AppendLog("== Refresh finalizado ==");
@@ -257,6 +267,42 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RunVulnScanAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, "Varrendo MSRC — últimos 3 meses...");
+            await ScanVulnerabilitiesAsync(3, _cts.Token);
+            StatusText = VulnScanStatus;
+        }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task ApplyPatchAsync(VulnerabilityItem? item)
+    {
+        if (item is null || IsBusy) return;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, $"Aplicando patch {item.Kb} para {item.Cve}...");
+            AppendLog($"== Aplicando patch {item.Kb} ({item.Cve}, severidade {item.Severity}) ==");
+            var ok = await _wu.InstallByKbAsync(item.Kb, AppendLog, _cts.Token);
+            AppendLog(ok
+                ? $"Patch {item.Kb} solicitado. Um reboot pode ser necessário."
+                : $"Falha ao instalar {item.Kb} — ver logs.");
+            await ScanVulnerabilitiesAsync(3, _cts.Token);
+        }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
     private void OpenCatalogUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return;
@@ -336,6 +382,25 @@ public partial class MainViewModel : ObservableObject
             foreach (var d in list) Drives.Add(d);
             DriveInfoText = string.Join("  ·  ",
                 list.ConvertAll(d => $"{d.Drive} {d.FragmentationPercent:N0}%"));
+        });
+    }
+
+    private async Task ScanVulnerabilitiesAsync(int monthsBack, CancellationToken ct)
+    {
+        var os = _catalog.GetCurrentOsBuild();
+        var installed = await _catalog.GetInstalledKbsAsync(ct);
+        var vulns = await _vuln.ScanAsync(os, installed, monthsBack, AppendLog, ct);
+        RunOnUi(() =>
+        {
+            Vulnerabilities.Clear();
+            foreach (var v in vulns) Vulnerabilities.Add(v);
+            TotalVulnCount = vulns.Count;
+            CriticalVulnCount = vulns.Count(v =>
+                v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
+            VulnCheckedAt = DateTime.Now;
+            VulnScanStatus = vulns.Count == 0
+                ? "Nenhuma vulnerabilidade pendente detectada nos últimos meses."
+                : $"{CriticalVulnCount} crítica(s) · {TotalVulnCount} pendente(s) — aba Vulnerabilidades.";
         });
     }
 

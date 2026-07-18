@@ -79,6 +79,23 @@ foreach ($x in $u) {
     }
 
     /// <summary>
+    /// Instala uma KB específica sem prompt.
+    /// </summary>
+    public async Task<bool> InstallByKbAsync(string kb, Action<string>? onLine, CancellationToken ct)
+    {
+        await EnsureModuleAsync(onLine, ct);
+        var kbNumber = kb.Replace("KB", "", StringComparison.OrdinalIgnoreCase).Trim();
+        var script = $@"
+Import-Module PSWindowsUpdate -ErrorAction Stop
+Write-Output 'Instalando KB{kbNumber}...'
+Get-WindowsUpdate -MicrosoftUpdate -KBArticleID {kbNumber} -Install -AcceptAll -IgnoreReboot -Confirm:$false -Verbose 2>&1 |
+    ForEach-Object {{ Write-Output $_ }}
+";
+        var result = await _ps.RunAsync(script, onLine, ct);
+        return result.Success;
+    }
+
+    /// <summary>
     /// Instala TODAS as atualizações pendentes sem confirmar.
     /// </summary>
     public async Task<bool> InstallAllAsync(Action<string>? onLine, CancellationToken ct)
