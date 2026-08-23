@@ -298,7 +298,114 @@ public sealed class ReportService
         }
         catch (Exception ex) { _log.Warning(ex, "Falha ao abrir {Path}", path); }
     }
+
+    // ================= ENVIO POR E-MAIL =================
+
+    /// <summary>Destino dos reports.</summary>
+    public string DestinationEmail { get; set; } = "fernandogssilva@gmail.com";
+
+    /// <summary>
+    /// Abre um rascunho de e-mail ja preenchido com o report.
+    ///
+    /// NUNCA envia sozinho, e NAO embute credenciais SMTP. Credencial dentro
+    /// de executavel distribuido e extraivel por qualquer um - viraria um
+    /// relay de spam com a conta do autor. O usuario revisa e clica enviar.
+    ///
+    /// Ordem de tentativa:
+    ///   1. Outlook via late binding - anexa o .zip automaticamente
+    ///   2. mailto: - abre o cliente padrao; o anexo o usuario arrasta,
+    ///      porque o protocolo mailto nao permite anexo por seguranca
+    /// </summary>
+    public EmailResult PrepareEmail(ReportInput input, ReportResult report, Action<string>? onLine)
+    {
+        var assunto = $"[Curupira] {input.Severity} - {input.Module} - {Sanitize(input.Title)}";
+
+        var corpo = new StringBuilder();
+        corpo.AppendLine("Report de falha gerado pelo Curupira.");
+        corpo.AppendLine();
+        corpo.AppendLine($"Modulo:      {input.Module}");
+        corpo.AppendLine($"Severidade:  {input.Severity}");
+        corpo.AppendLine($"Reproduz:    {(input.Reproducible ? "sempre" : "aconteceu uma vez")}");
+        corpo.AppendLine($"Imagens:     {input.Attachments.Count}");
+        corpo.AppendLine($"Versao:      {typeof(App).Assembly.GetName().Version}");
+        corpo.AppendLine();
+        corpo.AppendLine("--- O que aconteceu ---");
+        corpo.AppendLine(Sanitize(input.Description.Trim()));
+        if (!string.IsNullOrWhiteSpace(input.StepsToReproduce))
+        {
+            corpo.AppendLine();
+            corpo.AppendLine("--- Passos para reproduzir ---");
+            corpo.AppendLine(Sanitize(input.StepsToReproduce.Trim()));
+        }
+        corpo.AppendLine();
+        corpo.AppendLine("O pacote completo (imagens + diagnostico + log) esta anexado.");
+
+        var anexo = !string.IsNullOrEmpty(report.ZipPath) && File.Exists(report.ZipPath)
+            ? report.ZipPath : "";
+
+        // ---- 1. Outlook ----
+        try
+        {
+            var tipo = Type.GetTypeFromProgID("Outlook.Application");
+            if (tipo is not null)
+            {
+                dynamic? app = Activator.CreateInstance(tipo);
+                if (app is not null)
+                {
+                    dynamic mail = app.CreateItem(0); // olMailItem
+                    mail.To = DestinationEmail;
+                    mail.Subject = assunto;
+                    mail.Body = corpo.ToString();
+                    if (anexo.Length > 0) mail.Attachments.Add(anexo);
+                    mail.Display(false); // rascunho aberto, NAO enviado
+                    onLine?.Invoke("Rascunho aberto no Outlook com o pacote anexado. Revise e envie.");
+                    _log.Information("Rascunho de report criado no Outlook");
+                    return new EmailResult(true, "outlook", true, "");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Debug(ex, "Outlook indisponivel, caindo para mailto");
+        }
+
+        // ---- 2. mailto ----
+        try
+        {
+            // mailto tem limite pratico de tamanho; corpo enxuto
+            var resumo = corpo.ToString();
+            if (resumo.Length > 1600) resumo = resumo[..1600] + "\n\n[...] ver o anexo para o conteudo completo.";
+
+            var url = $"mailto:{Uri.EscapeDataString(DestinationEmail)}" +
+                      $"?subject={Uri.EscapeDataString(assunto)}" +
+                      $"&body={Uri.EscapeDataString(resumo)}";
+
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+
+            if (anexo.Length > 0)
+            {
+                try { System.Windows.Clipboard.SetText(anexo); } catch { }
+                OpenFolder(anexo);
+                onLine?.Invoke("Cliente de e-mail aberto. O anexo NAO pode ser adicionado automaticamente por " +
+                               "restricao do protocolo mailto - arraste o .zip que abrimos no Explorer. " +
+                               "O caminho tambem foi copiado para a area de transferencia.");
+            }
+            _log.Information("Rascunho de report aberto via mailto");
+            return new EmailResult(true, "mailto", false, "");
+        }
+        catch (Exception ex)
+        {
+            _log.Warning(ex, "Falha ao abrir cliente de e-mail");
+            return new EmailResult(false, "", false,
+                $"Nao foi possivel abrir o cliente de e-mail: {ex.Message}. " +
+                $"Envie manualmente para {DestinationEmail} anexando {anexo}");
+        }
+    }
 }
+
+/// <summary>Resultado da preparacao do e-mail.</summary>
+public sealed record EmailResult(bool Success, string Method, bool AttachedAutomatically, string Error);
+
 
 // ================= MODELOS =================
 

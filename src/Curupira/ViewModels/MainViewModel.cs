@@ -103,6 +103,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _fixesTotal;
     [ObservableProperty] private int _fixesDone;
     [ObservableProperty] private int _selectedVulnCount;
+    [ObservableProperty] private int _vulnLikelyPatchedCount;
+
+    /// <summary>
+    /// Por padrao a lista mostra so o que esta realmente pendente. As CVEs
+    /// cobertas pela cumulativa continuam disponiveis - marcar isto revela.
+    /// </summary>
+    [ObservableProperty] private bool _showLikelyPatchedVulns;
 
     public ObservableCollection<WindowsUpdateItem> WindowsUpdates { get; } = new();
     public ObservableCollection<WingetUpdateItem> WingetUpdates { get; } = new();
@@ -149,6 +156,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _reportReproducible;
     [ObservableProperty] private string _reportStatus = "";
     [ObservableProperty] private string _lastReportPath = "";
+    [ObservableProperty] private string _reportEmail = "fernandogssilva@gmail.com";
+    [ObservableProperty] private bool _reportSendByEmail = true;
 
     public List<string> ReportModules { get; } = new()
     {
@@ -190,6 +199,31 @@ public partial class MainViewModel : ObservableObject
     }
 
     partial void OnReportDescriptionChanged(string value) => RefreshReportValidation();
+
+    partial void OnShowLikelyPatchedVulnsChanged(bool value) => ApplyVulnFilter();
+
+    /// <summary>Reaplica o filtro sobre a lista completa ja carregada.</summary>
+    private void ApplyVulnFilter()
+    {
+        var fonte = ShowLikelyPatchedVulns
+            ? _allVulnerabilities
+            : _allVulnerabilities.Where(v => !v.LikelyPatched).ToList();
+
+        RunOnUi(() =>
+        {
+            foreach (var old in Vulnerabilities) old.PropertyChanged -= OnVulnRowChanged;
+            Vulnerabilities.Clear();
+            foreach (var v in fonte)
+            {
+                var row = new VulnRow(v);
+                row.PropertyChanged += OnVulnRowChanged;
+                Vulnerabilities.Add(row);
+            }
+            SelectedVulnCount = 0;
+        });
+    }
+
+    private List<VulnerabilityItem> _allVulnerabilities = new();
 
     // ================= PRE-REQUISITOS =================
     public ObservableCollection<Prerequisite> Prerequisites { get; } = new();
@@ -1401,7 +1435,28 @@ public partial class MainViewModel : ObservableObject
             ReportStatus = "Report gerado. Nada foi enviado — o arquivo esta no seu disco e voce decide se compartilha.";
             StatusText = "Report de falha gerado.";
             AppendLog($"Report em: {LastReportPath}");
-            _report.OpenFolder(result.Folder);
+
+            if (ReportSendByEmail)
+            {
+                _report.DestinationEmail = ReportEmail;
+                var mail = _report.PrepareEmail(input, result, AppendLog);
+                if (mail.Success)
+                {
+                    ReportStatus = mail.AttachedAutomatically
+                        ? $"Rascunho aberto no Outlook para {ReportEmail}, com o pacote ja anexado. Revise e clique em enviar."
+                        : $"Cliente de e-mail aberto para {ReportEmail}. Arraste o .zip que abrimos no Explorer - " +
+                          "o protocolo mailto nao permite anexo automatico. O caminho ja esta na area de transferencia.";
+                }
+                else
+                {
+                    ReportStatus = mail.Error;
+                    _report.OpenFolder(result.Folder);
+                }
+            }
+            else
+            {
+                _report.OpenFolder(result.Folder);
+            }
         }
         catch (OperationCanceledException) { StatusText = "Cancelado."; }
         catch (Exception ex)
@@ -1425,6 +1480,39 @@ public partial class MainViewModel : ObservableObject
         LastReportPath = "";
         ReportStatus = "Formulario limpo.";
         RefreshReportValidation();
+    }
+
+    /// <summary>Reabre o rascunho de e-mail do ultimo pacote gerado.</summary>
+    [RelayCommand]
+    private void EmailLastReport()
+    {
+        if (string.IsNullOrEmpty(LastReportPath))
+        {
+            ReportStatus = "Gere um pacote antes de enviar.";
+            return;
+        }
+        try
+        {
+            _report.DestinationEmail = ReportEmail;
+            var input = new ReportInput
+            {
+                Title = string.IsNullOrWhiteSpace(ReportTitle) ? "(sem titulo)" : ReportTitle,
+                Description = ReportDescription,
+                StepsToReproduce = ReportSteps,
+                Module = ReportModule,
+                Severity = ReportSeverity,
+                Reproducible = ReportReproducible,
+                Attachments = ReportAttachments.ToList()
+            };
+            var zip = LastReportPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ? LastReportPath : "";
+            var mail = _report.PrepareEmail(input, new ReportResult(true, "", zip, ""), AppendLog);
+            ReportStatus = mail.Success
+                ? (mail.AttachedAutomatically
+                    ? $"Rascunho reaberto no Outlook para {ReportEmail}."
+                    : $"Cliente de e-mail reaberto para {ReportEmail}. Anexe o .zip manualmente.")
+                : mail.Error;
+        }
+        catch (Exception ex) { ReportStatus = $"Falha: {ex.Message}"; }
     }
 
     [RelayCommand]
@@ -1644,25 +1732,33 @@ public partial class MainViewModel : ObservableObject
         var combined = new List<VulnerabilityItem>();
         combined.AddRange(localList);
         combined.AddRange(msrcList);
+        _allVulnerabilities = combined;
 
         RunOnUi(() =>
         {
             foreach (var old in Vulnerabilities) old.PropertyChanged -= OnVulnRowChanged;
             Vulnerabilities.Clear();
-            foreach (var v in combined)
+            var visiveis = ShowLikelyPatchedVulns
+                ? combined
+                : combined.Where(v => !v.LikelyPatched).ToList();
+            foreach (var v in visiveis)
             {
                 var row = new VulnRow(v);
                 row.PropertyChanged += OnVulnRowChanged;
                 Vulnerabilities.Add(row);
             }
-            TotalVulnCount = combined.Count;
+            VulnLikelyPatchedCount = combined.Count(v => v.LikelyPatched);
+            TotalVulnCount = combined.Count(v => !v.LikelyPatched);
             CriticalVulnCount = combined.Count(v =>
-                v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
+                !v.LikelyPatched && v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
             SelectedVulnCount = 0;
             VulnCheckedAt = DateTime.Now;
             VulnScanStatus = combined.Count == 0
                 ? "Nenhuma vulnerabilidade detectada."
-                : $"{CriticalVulnCount} crítica(s) · {TotalVulnCount} total (MSRC + Auditoria local)";
+                : $"{CriticalVulnCount} crítica(s) · {TotalVulnCount} pendente(s)" +
+                  (VulnLikelyPatchedCount > 0
+                      ? $" · {VulnLikelyPatchedCount} provavelmente já corrigida(s) pela cumulativa (ocultas)"
+                      : "");
         });
 
         var critMsrc  = msrcList.Count(v => v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));

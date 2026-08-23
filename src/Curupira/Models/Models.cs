@@ -40,7 +40,16 @@ public sealed record VulnerabilityItem(
     string Description,
     string MsrcUrl,
     string CatalogUrl,
-    DateTime ReleaseDate);
+    DateTime ReleaseDate)
+{
+    /// <summary>
+    /// A cumulativa instalada e posterior a publicacao desta CVE, entao ela
+    /// provavelmente ja esta corrigida. NAO e certeza: patches out-of-band e
+    /// componentes fora da cumulativa (.NET, Edge, Office, Defender) escapam.
+    /// Por isso marcamos em vez de esconder.
+    /// </summary>
+    public bool LikelyPatched { get; init; }
+}
 
 public sealed record KbPendingItem(
     string Kb,
@@ -159,6 +168,7 @@ public sealed class VulnRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObj
     public string MsrcUrl     => Item.MsrcUrl;
     public string CatalogUrl  => Item.CatalogUrl;
     public DateTime ReleaseDate => Item.ReleaseDate;
+    public bool LikelyPatched => Item.LikelyPatched;
 
     /// <summary>KBs reais (KBxxxxxxx) podem ser aplicadas automaticamente.
     /// Findings locais trazem cmdlet/registry no campo Kb e sao manuais.</summary>

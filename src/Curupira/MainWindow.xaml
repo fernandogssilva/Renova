@@ -376,7 +376,17 @@
                                     <Button Content="Corrigíveis automaticamente" Style="{StaticResource ChipButton}"
                                             Command="{Binding SelectAutoFixableVulnsCommand}" Margin="0,0,6,0"/>
                                     <Button Content="Limpar" Style="{StaticResource ChipButton}"
-                                            Command="{Binding ClearVulnSelectionCommand}"/>
+                                            Command="{Binding ClearVulnSelectionCommand}" Margin="0,0,14,0"/>
+                                    <CheckBox VerticalAlignment="Center" FontSize="11.5"
+                                              Foreground="{DynamicResource Fg2Brush}"
+                                              IsChecked="{Binding ShowLikelyPatchedVulns}"
+                                              ToolTip="A cumulativa instalada provavelmente já corrigiu essas CVEs, mas não é garantia: patches out-of-band e componentes fora da cumulativa (.NET, Edge, Office, Defender) escapam.">
+                                        <TextBlock>
+                                            <Run Text="Mostrar as"/>
+                                            <Run Text="{Binding VulnLikelyPatchedCount, Mode=OneWay}" FontWeight="Bold"/>
+                                            <Run Text="prováveis já corrigidas"/>
+                                        </TextBlock>
+                                    </CheckBox>
                                 </StackPanel>
 
                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
@@ -447,6 +457,27 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
+                                <DataGridTemplateColumn Header="Status" Width="118" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock VerticalAlignment="Center" FontSize="10.5"
+                                                       FontWeight="SemiBold" TextWrapping="Wrap">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Pendente"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LikelyPatched}" Value="True">
+                                                                <Setter Property="Text" Value="Provável já corrigida"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource Fg3Brush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="CVSS" Binding="{Binding CvssScore, StringFormat={}{0:N1}}" Width="58" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Identificador" Binding="{Binding Cve}" Width="145" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="Correção" Binding="{Binding Kb}" Width="210" IsReadOnly="True"/>
@@ -1326,6 +1357,33 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- ===== Envio ===== -->
+                            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="Enviar por e-mail" Style="{StaticResource CardTitle}" Margin="0,0,0,8"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Padding="9,7"
+                                                 Text="{Binding ReportEmail, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <CheckBox Grid.Column="1" Content="Abrir e-mail ao gerar" Margin="14,0,0,0"
+                                                  VerticalAlignment="Center" Foreground="{DynamicResource Fg1Brush}"
+                                                  IsChecked="{Binding ReportSendByEmail}"/>
+                                    </Grid>
+                                    <TextBlock Style="{StaticResource CardCaption}" FontSize="11.5" LineHeight="18" TextWrapping="Wrap">
+                                        <Run Text="O Curupira não envia o e-mail sozinho." FontWeight="SemiBold"/>
+                                        <Run Text="Ele abre um rascunho no seu cliente de e-mail já preenchido — você revisa e clica em enviar."/>
+                                        <LineBreak/><LineBreak/>
+                                        <Run Text="Com o Outlook instalado, o .zip é anexado automaticamente. Sem ele, o Windows abre o cliente padrão e o Explorer com o arquivo selecionado, porque o protocolo mailto não permite anexo por segurança."/>
+                                        <LineBreak/><LineBreak/>
+                                        <Run Text="Nenhuma credencial de e-mail fica embutida no aplicativo." FontWeight="SemiBold"
+                                             Foreground="{DynamicResource SuccessBrush}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
                             <!-- ===== Ações ===== -->
                             <Border Style="{StaticResource CardBorder}">
                                 <StackPanel>
@@ -1340,9 +1398,12 @@
                                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                                             <Button Content="Pasta de reports" Style="{StaticResource SecondaryButton}"
                                                     Command="{Binding OpenReportsFolderCommand}" Margin="0,0,8,0"/>
+                                            <Button Content="Reabrir e-mail" Style="{StaticResource SecondaryButton}"
+                                                    Command="{Binding EmailLastReportCommand}" Margin="0,0,8,0"
+                                                    Visibility="{Binding LastReportPath, Converter={StaticResource B2V}}"/>
                                             <Button Content="Limpar" Style="{StaticResource ChipButton}"
                                                     Command="{Binding ClearReportCommand}" Margin="0,0,8,0"/>
-                                            <Button Content="Gerar pacote de report" Style="{StaticResource FireButton}"
+                                            <Button Content="Gerar e enviar" Style="{StaticResource FireButton}"
                                                     Command="{Binding SubmitReportCommand}"/>
                                         </StackPanel>
                                     </Grid>
