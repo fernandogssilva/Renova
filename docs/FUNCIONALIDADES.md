@@ -1,6 +1,6 @@
 # Funcionalidades do Curupira
 
-Documento de referência do que a plataforma faz, módulo a módulo.
+Documento completo do que a plataforma faz, módulo por módulo.
 
 ![Mapa de funções](images/mapa-de-funcoes.svg)
 
@@ -8,182 +8,239 @@ Documento de referência do que a plataforma faz, módulo a módulo.
 
 ## Índice
 
+- [Painel](#painel)
 - [Segurança](#segurança)
 - [Limpeza](#limpeza)
 - [Desempenho](#desempenho)
-- [Sistema e transparência](#sistema-e-transparência)
+- [Sistema](#sistema)
 - [O que o Curupira deliberadamente NÃO faz](#o-que-o-curupira-deliberadamente-não-faz)
-- [Resumo técnico](#resumo-técnico)
+
+---
+
+## Painel
+
+![Painel](images/painel.svg)
+
+### Pontuação de saúde (0–100)
+
+Um número único que resume o estado da máquina, com anel colorido e rótulo.
+
+| Faixa | Rótulo | Cor |
+|---|---|---|
+| 90–100 | Excelente | verde |
+| 75–89 | Bom | verde-menta |
+| 55–74 | Requer atenção | âmbar |
+| 0–54 | Crítico | vermelho |
+
+**Como é calculado** — parte de 100 e desconta:
+
+| Fator | Desconto | Teto |
+|---|---|---|
+| Vulnerabilidade crítica | −8 cada | −35 |
+| Demais vulnerabilidades | −1 cada | −10 |
+| Update de segurança pendente | −5 cada | −20 |
+| Update comum pendente | −2 cada | −8 |
+| App desatualizado | −0,5 cada | −8 |
+| Disco recuperável > 10 GB | −10 | — |
+| RAM acima de 90% | −10 | — |
+| Mais de 20 apps na inicialização | −6 | — |
+| Drives com > 10% de fragmentação | −6 | — |
+| Build defasada do catálogo oficial | −8 | — |
+
+### Cards explicativos
+
+Cada uma das 8 áreas responde três perguntas, em vez de mostrar só um número:
+
+1. **O que foi encontrado** — o valor e a severidade
+2. **O que é** — a explicação técnica
+3. **O que melhora no computador** — o benefício concreto
+
+Cada card tem um botão que leva direto à seção correspondente.
 
 ---
 
 ## Segurança
 
-### 1. Vulnerabilidades (CVEs)
+### Vulnerabilidades
 
-Consulta a **MSRC CVRF API** da Microsoft (`api.msrc.microsoft.com/cvrf/v3.0`) e cruza os CVEs publicados com os patches já instalados na máquina.
+Duas fontes combinadas numa única lista:
 
-| Recurso | Detalhe |
-|---|---|
-| Fonte | API oficial da Microsoft, últimos 3 meses |
-| Filtro por produto | Só mostra CVEs do seu Windows (10 ou 11), lido do registro |
-| Dados por CVE | Severidade, CVSS Base Score, KB que corrige, data de publicação |
-| Deduplicação | Cruza com `Get-HotFix` — não mostra o que já está aplicado |
-| Cache | 30 minutos em memória, evita re-download em varreduras seguidas |
+**CVEs da Microsoft (MSRC)**
+- Consulta a API oficial `api.msrc.microsoft.com/cvrf/v3.0`
+- Últimos 3 meses de publicações
+- Extrai severidade, CVSS BaseScore e a KB que corrige
+- Filtra pelo seu produto (Windows 10 ou 11)
+- Cruza com `Get-HotFix` — mostra só o que ainda falta
+- Cache de 30 minutos para não refazer o download
 
-**Correção em lote:** marque várias e aplique de uma vez. Cada linha percorre os estados `Na fila → Aplicando → Corrigido / Falhou / Manual`, com cor própria.
-
-Seleção rápida: **Todas** · **Só críticas** · **Corrigíveis automaticamente** · **Limpar**.
-
-O app distingue dois tipos de correção:
-
-- **KB real** (`KB5039212`) — instala sozinho via `Get-WindowsUpdate -KBArticleID`
-- **Configuração local** (`Disable-WindowsOptionalFeature ...`) — marcada como *Manual*, exibindo o comando exato para você executar
-
-Essa distinção existe para o app nunca reportar como corrigido algo que não corrigiu.
-
-### 2. Auditoria local de segurança
-
-12 verificações nativas de configuração insegura do próprio Windows — o tipo de coisa que scanners comerciais reportam:
+**Auditoria local — 12 verificações nativas**
 
 | # | Verificação | O que detecta |
 |---|---|---|
 | 1 | Windows Defender | Antivírus desligado, proteção em tempo real off, Tamper Protection off, assinaturas com mais de 7 dias |
-| 2 | Firewall | Perfis Domain, Private ou Public desativados |
+| 2 | Firewall | Perfis Domínio, Privado ou Público desativados |
 | 3 | BitLocker | Drive de sistema sem criptografia |
-| 4 | LSA Protection | `RunAsPPL` desativado — permite dump de credenciais (Mimikatz) |
+| 4 | LSA Protection | `RunAsPPL` desativado — permite dump de credenciais |
 | 5 | Credential Guard | VBS inativo |
 | 6 | SMBv1 | Habilitado — vetor de EternalBlue e WannaCry |
-| 7 | NoLmHash | Hashes LM não bloqueados |
+| 7 | LM Hash | `NoLmHash` não configurado |
 | 8 | RDP + NLA | RDP exposto sem Network Level Authentication (BlueKeep) |
-| 9 | Contas | AutoLogon com senha em texto claro, Guest habilitada, senhas em branco permitidas |
-| 10 | Secure Boot + TPM | Desativados — bootkits viáveis |
-| 11 | PowerShell v2 | Instalado — permite bypass de script-block logging |
-| 12 | Portas expostas | 135, 139, 445, 3389, 5985, 5986 escutando em `0.0.0.0` |
+| 9 | AutoLogon | Credenciais em texto claro no registro |
+| 10 | Conta Guest | Habilitada |
+| 11 | Secure Boot e TPM | Desativados |
+| 12 | PowerShell v2 | Instalado — permite burlar o script-block logging |
 
-**Integração opcional com Sysinternals.** Se `sigcheck.exe` e `autorunsc.exe` estiverem no PATH ou em `C:\Sysinternals`, o Curupira também verifica binários sem assinatura em `System32` e faz enumeração completa de persistência.
+Extras quando o [Sysinternals](https://learn.microsoft.com/sysinternals/downloads/sysinternals-suite) está no PATH:
+- **Sigcheck** — binários sem assinatura em `System32`
+- **Autorunsc** — enumeração completa de inicialização com detecção de não-assinados
 
-### 3. Windows Update
+**Correção em lote**
+- Caixa de seleção por linha
+- Seleção rápida: todas · só críticas · corrigíveis automaticamente
+- Aplica em sequência com estado visual por linha: `Na fila → Aplicando → Corrigido / Falhou / Manual`
+- Distingue KB real (instala sozinho via `PSWindowsUpdate`) de configuração local (mostra o cmdlet para você executar)
+- Overlay animado durante a aplicação, com alvo atual e progresso
 
-Instalação sem prompts via `PSWindowsUpdate` (versão fixada em `2.2.1.5` para evitar ataque de supply chain).
+### Windows Update
 
-### 4. Catálogo Microsoft
+- Lista KBs pendentes com título, categoria e tamanho
+- Destaca as de segurança
+- Instala com `-AcceptAll -IgnoreReboot -Confirm:$false` — sem prompts
+- Instalação por KB específica, para correção pontual
 
-Compara a build instalada com a última publicada no **release-health oficial** da Microsoft. Detecta quando o Windows Update atrasa a entrega — o que acontece com frequência e passa despercebido.
+### Catálogo Microsoft
+
+- Lê a build instalada de `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion` (`CurrentBuild` + `UBR`)
+- Baixa e interpreta a página oficial de release-health da Microsoft
+- Compara e informa se você está atrasado
+- Link direto para o Microsoft Update Catalog
+
+Útil porque o Windows Update às vezes demora semanas para entregar uma atualização em máquinas específicas.
 
 ---
 
 ## Limpeza
 
-### 5. Limpeza de disco
+### Limpeza de disco
 
-Alvos mapeados automaticamente: TEMP do usuário e do Windows, Prefetch, downloads do Windows Update, `Windows.old`, Delivery Optimization, caches de Brave, Chrome e Edge, e caches de desenvolvimento — npm, pip, NuGet, Go.
+Alvos mapeados automaticamente:
+
+| Categoria | Caminhos |
+|---|---|
+| Temporários | `%TEMP%`, `C:\Windows\Temp`, Prefetch |
+| Windows Update | `SoftwareDistribution\Download`, `Windows.old` |
+| Navegadores | Cache de Brave, Chrome e Edge |
+| Desenvolvimento | npm, pip, NuGet, Go modules |
+| Sistema | Delivery Optimization Cache |
 
 Depois executa `cleanmgr /sagerun` com 26 presets ativados.
 
-**Proteção anti-symlink:** a varredura ignora reparse points. Sem isso, uma junction plantada dentro de `%TEMP%` apontando para `Documentos` faria o app apagar seus arquivos.
+**Proteção contra symlink** — a enumeração ignora reparse points. Sem isso, uma junction plantada dentro de `%TEMP%` apontando para a pasta Documentos faria o app, rodando elevado, apagar arquivos legítimos.
 
-### 6. Regras da comunidade (winapp2.ini)
+### Regras da comunidade (winapp2)
 
-O recurso que dá profundidade real ao módulo de limpeza.
+Suporte à base [winapp2.ini](https://github.com/MoscaDotTo/Winapp2) — milhares de regras de limpeza mantidas há mais de 15 anos. **O CCleaner 7 abandonou esse formato.**
 
-`winapp2.ini` é uma base comunitária com **milhares de regras** de limpeza, mantida há mais de 15 anos. Cobre aplicativos específicos que nenhum limpador genérico conhece. **O CCleaner 7 abandonou esse formato.**
-
-Como funciona, na ordem:
+Como funciona:
 
 ```
-1. Baixa a base oficial (MoscaDotTo/Winapp2)
-2. DETECTA quais regras se aplicam a esta máquina
-     Detect=HKCU\Software\...      a chave existe?
-     DetectFile=%LocalAppData%\... o caminho existe?
+1. Baixa a base oficial (~4 MB, milhares de entradas)
+2. DETECTA quais se aplicam a esta máquina
+     Detect=HKCU\Software\...       (a chave existe?)
+     DetectFile=%LocalAppData%\...  (o caminho existe?)
    → milhares de regras viram algumas dezenas relevantes
-3. MEDE o espaço só das que passaram (em paralelo)
+3. MEDE só as que passaram, em paralelo
 4. Você escolhe o que limpar
 ```
 
-A etapa 2 é o que torna isso viável — sem ela, seriam milhares de varreduras de disco inúteis.
+A etapa 2 é o que torna isso viável — sem ela seriam milhares de varreduras de disco inúteis.
 
-Suporta expansão de 22 variáveis (`%LocalAppData%`, `%CommonAppData%`, `%WinDir%`...), curingas no meio do caminho (`User Data\*\Cache`) e as flags `RECURSE` e `REMOVESELF`.
+Recursos do parser:
+- Expansão de 22 variáveis (`%LocalAppData%`, `%CommonAppData%`, `%WinDir%`…)
+- Curingas no meio do caminho (`User Data\*\Cache`)
+- Flags `RECURSE` e `REMOVESELF`
+- Categorias traduzidas via `LangSecRef`
+- Avisos declarados pela própria entrada
 
-### 7. Registro do Windows
+### Registro do Windows
 
-> **Limpar registro não acelera o Windows.** O registro tem milhões de chaves e fica indexado em memória — remover algumas centenas não muda tempo de boot nem uso de RAM. O app diz isso na própria interface.
+7 verificações, todas com **backup `.reg` obrigatório antes de qualquer remoção**:
 
-O valor real aqui é **higiene** e, num caso específico, **segurança**.
-
-7 categorias analisadas em paralelo:
-
-| Categoria | O que detecta | Relevância |
+| Categoria | O que detecta | Severidade |
 |---|---|---|
-| Caminhos de aplicativo | App Paths apontando para `.exe` inexistente | Resíduo |
-| Inicialização quebrada | Run/RunOnce chamando arquivo que sumiu | Desperdício |
-| Programa desinstalado | Entradas fantasma em Adicionar/Remover | Resíduo |
-| **Regra de firewall órfã** | **Libera `.exe` que não existe mais** | **Segurança** |
-| Histórico de uso | RunMRU e TypedPaths | Privacidade |
-| Cache de nomes | MUICache com referências mortas | Resíduo |
+| Regra de firewall órfã | Libera um `.exe` que não existe mais | **Segurança** |
+| Inicialização quebrada | `Run`/`RunOnce` chamando arquivo ausente | Desperdício |
+| Caminhos de aplicativo | `App Paths` apontando para `.exe` inexistente | Resíduo |
+| Programa desinstalado | Entrada fantasma em Adicionar/Remover | Resíduo |
+| Histórico de uso | `RunMRU` e `TypedPaths` (privacidade) | Resíduo |
+| Cache de nomes | `MUICache` com referências mortas | Resíduo |
 | Extensão sem destino | `.ext` apontando para ProgID não registrado | Resíduo |
 
-**Por que a regra de firewall órfã importa:** se o Windows tem uma regra liberando `C:\Games\antigo\jogo.exe` e esse arquivo sumiu, qualquer programa instalado exatamente naquele caminho **herda a permissão de rede** sem passar por você.
-
-**Backup obrigatório.** Antes de qualquer remoção, o app exporta as chaves afetadas para um `.reg` em `%LOCALAPPDATA%\Curupira\registry-backups\`. Se o export falhar, **a remoção é abortada**. Restaurar é duplo clique no arquivo.
+**Se o backup falhar, a remoção é abortada.** Restaurar é duplo clique no `.reg` salvo em `%LOCALAPPDATA%\Curupira\registry-backups\`.
 
 ---
 
 ## Desempenho
 
-### 8. Memória RAM
+### Memória RAM
 
-Duas operações distintas:
+**Liberação**
+- `EmptyWorkingSet` em cada processo — devolve páginas retidas
+- Purge da standby list via `NtSetSystemInformation`, com `SeProfileSingleProcessPrivilege`
+- Pula processos críticos do sistema para não causar travamento
 
-1. **Compactar working sets** — `EmptyWorkingSet` em cada processo, devolvendo páginas retidas
-2. **Descartar a standby list** — `NtSetSystemInformation` com `SeProfileSingleProcessPrivilege`, convertendo cache de arquivos em memória livre de verdade
+**Gerenciador por aplicativo**
+- Top 25 por consumo, **agrupados por nome** — navegadores abrem dezenas de processos
+- **Compactar** — devolve memória sem fechar o aplicativo
+- **Encerrar** — `CloseMainWindow()` primeiro, permitindo salvar; `Kill` após 2,5 s
+- Processos protegidos (`csrss`, `lsass`, `wininit`, `services`, `dwm`, `explorer`) com o botão desabilitado — encerrar qualquer um derruba a sessão ou causa tela azul
 
-> Isso **não cria RAM**. O ganho é perceptível depois de fechar aplicativos pesados ou antes de abrir algo que precisa de bastante memória. O efeito colateral é o cache de arquivos esfriar — por isso não vale executar de minuto em minuto.
+### Discos
 
-### 9. Aplicativos consumindo memória
+- `Optimize-Volume -Analyze` por unidade fixa
+- HDD recebe desfragmentação; SSD recebe TRIM
+- Data da última otimização lida do registro
 
-Top 25 aplicativos por consumo, **agrupados por nome** — navegadores abrem dezenas de processos e apareceriam como dezenas de linhas.
+### Inicialização
 
-| Ação | O que faz |
-|---|---|
-| **Compactar** | `EmptyWorkingSet` só naquele app — devolve memória **sem fechar** |
-| **Encerrar** | `CloseMainWindow()` primeiro, permitindo salvar; `Kill` após 2,5 s |
-
-Processos críticos do Windows (`csrss`, `lsass`, `wininit`, `services`, `dwm`, `explorer`) aparecem com o botão desabilitado e marcados como *Componente do Windows*. Encerrar qualquer um deles derruba a sessão ou causa tela azul.
-
-### 10. Discos
-
-`Optimize-Volume -Analyze` por unidade. **HDD** recebe desfragmentação; **SSD** recebe TRIM — desfragmentar SSD só consome ciclos de escrita à toa.
-
-### 11. Inicialização
-
-Lê `HKCU` e `HKLM`, chaves `Run` e `RunOnce`, cruzando com `StartupApproved` para saber o que está realmente ativo. Permite alternar sem abrir o `regedit`.
+- Lê `HKCU` e `HKLM`, chaves `Run` e `RunOnce`, incluindo `WOW6432Node`
+- Cruza com `StartupApproved` para saber o que está ativo
+- Alternar sem abrir o `regedit`
 
 ---
 
-## Sistema e transparência
+## Sistema
 
-### 12. Painel principal
+### Aplicativos (winget)
 
-**Pontuação de saúde 0-100** num anel colorido. Pondera vulnerabilidades críticas (peso maior), atualizações de segurança, aplicativos desatualizados, disco recuperável, uso de RAM, apps de inicialização, fragmentação e defasagem de build.
+- `winget upgrade` para listar o que tem versão nova
+- `winget upgrade --all --silent --accept-source-agreements --accept-package-agreements`
 
-Abaixo, 8 cards — cada um respondendo três perguntas:
+### Pré-requisitos
 
-- **O que foi encontrado** — o número e a severidade
-- **O que é** — a explicação técnica
-- **O que melhora no computador** — o benefício concreto
+Verifica tudo que o app precisa e instala o que for instalável:
 
-### 13. Varredura ao vivo
+| Componente | Instalável pelo Curupira |
+|---|---|
+| Provedor NuGet | Sim |
+| Repositório PSGallery (confiável) | Sim |
+| PSWindowsUpdate 2.2.1.5 (versão fixada) | Sim |
+| Winget | Não — vem da Microsoft Store |
+| Cmdlets nativos do Windows | Não — dependem da edição |
 
-Cada módulo mostrando, em tempo real: estado, contador de itens, barra de progresso, atividade atual, último item encontrado e a ação sugerida ao concluir.
+Quando um cmdlet não existe na edição instalada (BitLocker no Windows Home, por exemplo), o app **avisa e desliga a função correspondente**, em vez de deixá-la falhar em silêncio depois.
 
-### 14. Logs
+Também roda automaticamente durante a instalação.
 
-Em tela com auto-scroll e em arquivo (`Serilog`), com rotação diária e 14 dias de retenção, em `%LOCALAPPDATA%\Curupira\logs\`.
+### Varredura ao vivo
 
-### 15. Temas
+Cada módulo mostra em tempo real: estado, contador de itens encontrados, barra de progresso, atividade atual, último item encontrado e a ação sugerida ao concluir.
 
-Claro e escuro, com paleta recalculada em cada modo para manter contraste AA — não é o mesmo verde apenas clareado. A barra de título da janela acompanha o tema via DWM.
+### Logs
+
+- Painel ao vivo com rolagem automática
+- Arquivo em `%LOCALAPPDATA%\Curupira\logs\`, rotação diária, 14 dias de retenção
+- Caminhos sanitizados: `C:\Users\<nome>\` vira `C:\Users\%USER%\` para você poder compartilhar logs sem expor identidade
 
 ---
 
@@ -193,31 +250,36 @@ Tão importante quanto a lista de recursos:
 
 | Não faz | Por quê |
 |---|---|
-| Limpeza de CLSID em massa | É onde os "otimizadores" de mercado quebram instalações |
-| Remoção de fontes ou Shared DLLs | Mesmo motivo |
-| "Secure delete" multi-passe | Em SSD com wear leveling não garante nada — é teatro |
-| Prometer ganho de desempenho ao limpar registro | Não existe ganho mensurável |
-| Telemetria, analytics ou crash reports | Nenhum dado sai da máquina |
-| Bundleware, upsell ou scareware | Sem "seu PC está em risco crítico, compre agora" |
-
-As únicas chamadas de rede são a fontes públicas da Microsoft (`learn.microsoft.com`, `api.msrc.microsoft.com`) e ao repositório do winapp2 — todas documentadas e todas anônimas.
+| **Prometer que limpar registro acelera o Windows** | Não acelera. O registro tem milhões de chaves indexadas em memória; remover algumas centenas não muda boot nem consumo de RAM. O app declara isso na própria interface. |
+| **Varrer CLSID em massa, fontes ou Shared DLLs** | É exatamente onde os "otimizadores" de mercado quebram instalações. |
+| **Secure delete / sobrescrita multi-passe** | Em SSD com wear leveling e TRIM, sobrescrever não garante apagamento. É teatro de segurança. |
+| **Telemetria, analytics ou crash reports** | Nenhum dado sai da máquina. As únicas chamadas de rede são para fontes públicas da Microsoft. |
+| **Bundleware, upsell ou popup de "premium"** | A categoria inteira é conhecida por isso. |
+| **Desativar serviços do Windows** | Ganho marginal, risco alto de quebrar funcionalidade. |
 
 ---
 
-## Resumo técnico
+## Requisitos
 
-| Item | Valor |
-|---|---|
-| Plataforma | WPF · .NET 8 · C# 12 |
-| Arquitetura | MVVM com CommunityToolkit.Mvvm |
-| Distribuição | Single-file self-contained (~75 MB), sem runtime externo |
-| Requisito | Windows 10 20H1+ ou Windows 11, x64 |
-| Elevação | Manifesto `requireAdministrator` — UAC único no início |
-| Paralelismo | `MaxDegreeOfParallelism = ProcessorCount - 1` (deixa um núcleo para a UI) |
-| Cancelamento | Respeitado a cada alvo — cancelar responde em menos de 1 s |
-| Segurança do próprio app | Scripts PowerShell em pasta com ACL restrita a Administrators + SYSTEM; validação regex antes de qualquer interpolação em shell |
-| Integridade | SHA-256 publicado em cada release |
+- Windows 10 versão 20H1 ou superior, ou Windows 11
+- x64
+- PowerShell 5.1 (nativo)
+- Privilégio de administrador — o `.exe` solicita elevação sozinho
+- Internet para: MSRC, release-health, base winapp2 e instalação do PSWindowsUpdate
 
 ---
 
-© 2026 DataSec
+## Onde ficam os dados
+
+Tudo em `%LOCALAPPDATA%\Curupira\`:
+
+```
+logs\                 registro de operações, rotação diária
+registry-backups\     backups .reg antes de cada limpeza de registro
+.ps\                  scripts temporários, com ACL restrita a Administradores
+winapp2.ini           base de regras da comunidade
+theme.cfg             tema escolhido
+last_cleanup.txt      data da última limpeza
+```
+
+Desinstalar remove tudo.
