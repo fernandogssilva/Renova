@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" font-family="Segoe UI, Inter, sans-serif">
+  <defs>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/><stop offset="100%" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="720" fill="#0A1410"/>
+
+  <!-- ===== Cabeçalho ===== -->
+  <rect x="0" y="0" width="1028" height="74" fill="#111F19"/>
+  <circle cx="42" cy="37" r="20" fill="none" stroke="#1B2E25" stroke-width="4"/>
+  <path d="M 32 37 L 39 44 L 53 30" fill="none" stroke="#4ADE80" stroke-width="4" stroke-linecap="round"/>
+  <text x="76" y="34" font-size="19" font-weight="800" fill="#F0FDF4">CURUPIRA</text>
+  <text x="184" y="34" font-size="11.5" font-style="italic" fill="#5F8271">quem invade, se perde</text>
+  <text x="76" y="53" font-size="11.5" fill="#8FB5A2">Análise concluída.</text>
+
+  <rect x="700" y="21" width="106" height="32" rx="7" fill="#FB923C"/>
+  <text x="753" y="42" font-size="12" font-weight="600" fill="#FFF" text-anchor="middle">Executar tudo</text>
+  <rect x="814" y="21" width="86" height="32" rx="7" fill="#1B2E25"/>
+  <text x="857" y="42" font-size="12" font-weight="600" fill="#D6EFE0" text-anchor="middle">Atualizar</text>
+  <rect x="908" y="21" width="86" height="32" rx="7" fill="#1B2E25" opacity="0.4"/>
+  <text x="951" y="42" font-size="12" font-weight="600" fill="#5F8271" text-anchor="middle">Cancelar</text>
+
+  <rect x="0" y="74" width="1028" height="3" fill="#1B2E25"/>
+  <rect x="0" y="74" width="1028" height="3" fill="#34D399"/>
+
+  <!-- ===== Pontuação de saúde ===== -->
+  <rect x="18" y="94" width="992" height="182" rx="10" fill="#111F19" stroke="#2A4437"/>
+
+  <!-- anel -->
+  <circle cx="112" cy="185" r="58" fill="none" stroke="#1B2E25" stroke-width="10"/>
+  <path d="M 112 127 A 58 58 0 1 1 60.5 213.5" fill="none" stroke="#FBBF24" stroke-width="10" stroke-linecap="round"/>
+  <text x="112" y="196" font-size="40" font-weight="800" fill="#FBBF24" text-anchor="middle">68</text>
+  <text x="112" y="214" font-size="10" fill="#5F8271" text-anchor="middle">de 100</text>
+
+  <text x="208" y="135" font-size="12" font-weight="600" fill="#8FB5A2">Saúde do sistema</text>
+  <text x="208" y="170" font-size="28" font-weight="800" fill="#FBBF24">Requer atenção</text>
+  <text x="208" y="196" font-size="12.5" fill="#8FB5A2">3 vulnerabilidades críticas exigem correção imediata.</text>
+  <text x="208" y="215" font-size="12.5" fill="#8FB5A2">5 áreas no total precisam de atenção.</text>
+  <text x="208" y="240" font-size="11" fill="#5F8271">A pontuação combina vulnerabilidades, atualizações, disco, memória, inicialização e fragmentação.</text>
+
+  <rect x="838" y="118" width="152" height="62" rx="8" fill="#1B2E25"/>
+  <text x="914" y="152" font-size="28" font-weight="800" fill="#FB923C" text-anchor="middle">5</text>
+  <text x="914" y="170" font-size="10" fill="#5F8271" text-anchor="middle">áreas precisam de ação</text>
+  <rect x="838" y="190" width="152" height="34" rx="7" fill="#FB923C"/>
+  <text x="914" y="212" font-size="12.5" font-weight="700" fill="#FFF" text-anchor="middle">Corrigir tudo</text>
+
+  <!-- ===== Cards explicativos ===== -->
+  <text x="20" y="304" font-size="17" font-weight="700" fill="#F0FDF4">O que foi analisado</text>
+  <text x="20" y="324" font-size="11.5" fill="#8FB5A2">Cada área mostra o que foi encontrado, o que aquilo significa e o que muda no computador depois de resolver.</text>
+
+  <!-- card 1 -->
+  <g transform="translate(18,342)">
+    <rect x="0" y="0" width="992" height="112" rx="10" fill="#111F19" stroke="#2A4437"/>
+    <rect x="16" y="18" width="4" height="76" rx="2" fill="#EF4444"/>
+    <text x="36" y="34" font-size="12" fill="#EF4444">⚠</text>
+    <text x="54" y="34" font-size="12" font-weight="600" fill="#8FB5A2">Vulnerabilidades</text>
+    <text x="36" y="64" font-size="25" font-weight="800" fill="#F0FDF4">47</text>
+    <text x="36" y="81" font-size="11" fill="#5F8271">3 críticas</text>
+    <text x="36" y="98" font-size="10" font-weight="600" fill="#EF4444">Requer atenção imediata</text>
+
+    <text x="196" y="30" font-size="9" font-weight="700" fill="#5F8271">O QUE É</text>
+    <text x="196" y="48" font-size="12" fill="#8FB5A2">Falhas conhecidas (CVEs) e configurações inseguras do Windows, como SMBv1</text>
+    <text x="196" y="64" font-size="12" fill="#8FB5A2">ligado, RDP sem NLA ou proteção do LSA desativada.</text>
+    <text x="196" y="86" font-size="9" font-weight="700" fill="#5F8271">O QUE MELHORA NO COMPUTADOR</text>
+    <text x="196" y="102" font-size="12" fill="#D6EFE0">Fecha as portas de entrada mais usadas por ransomware e roubo de credenciais.</text>
+
+    <rect x="852" y="40" width="124" height="32" rx="7" fill="#FB923C"/>
+    <text x="914" y="61" font-size="12" font-weight="600" fill="#FFF" text-anchor="middle">Corrigir agora</text>
+  </g>
+
+  <!-- card 2 -->
+  <g transform="translate(18,464)">
+    <rect x="0" y="0" width="992" height="112" rx="10" fill="#111F19" stroke="#2A4437"/>
+    <rect x="16" y="18" width="4" height="76" rx="2" fill="#FBBF24"/>
+    <text x="36" y="34" font-size="12" fill="#FBBF24">✧</text>
+    <text x="54" y="34" font-size="12" font-weight="600" fill="#8FB5A2">Limpeza de disco</text>
+    <text x="36" y="64" font-size="25" font-weight="800" fill="#F0FDF4">8,4 GB</text>
+    <text x="36" y="81" font-size="11" fill="#5F8271">recuperáveis</text>
+    <text x="36" y="98" font-size="10" font-weight="600" fill="#FBBF24">Pode melhorar</text>
+
+    <text x="196" y="30" font-size="9" font-weight="700" fill="#5F8271">O QUE É</text>
+    <text x="196" y="48" font-size="12" fill="#8FB5A2">Arquivos temporários, caches de navegador e de ferramentas de</text>
+    <text x="196" y="64" font-size="12" fill="#8FB5A2">desenvolvimento, resíduos do Windows Update e a lixeira.</text>
+    <text x="196" y="86" font-size="9" font-weight="700" fill="#5F8271">O QUE MELHORA NO COMPUTADOR</text>
+    <text x="196" y="102" font-size="12" fill="#D6EFE0">Com disco cheio o Windows fica visivelmente mais lento — ele precisa de espaço.</text>
+
+    <rect x="852" y="40" width="124" height="32" rx="7" fill="#FB923C"/>
+    <text x="914" y="61" font-size="12" font-weight="600" fill="#FFF" text-anchor="middle">Limpar agora</text>
+  </g>
+
+  <!-- card 3 -->
+  <g transform="translate(18,586)">
+    <rect x="0" y="0" width="992" height="112" rx="10" fill="#111F19" stroke="#2A4437"/>
+    <rect x="16" y="18" width="4" height="76" rx="2" fill="#4ADE80"/>
+    <text x="36" y="34" font-size="12" fill="#4ADE80">▤</text>
+    <text x="54" y="34" font-size="12" font-weight="600" fill="#8FB5A2">Memória RAM</text>
+    <text x="36" y="64" font-size="25" font-weight="800" fill="#F0FDF4">62%</text>
+    <text x="36" y="81" font-size="11" fill="#5F8271">6,1 GB livres de 16 GB</text>
+    <text x="36" y="98" font-size="10" font-weight="600" fill="#4ADE80">Tudo certo</text>
+
+    <text x="196" y="30" font-size="9" font-weight="700" fill="#5F8271">O QUE É</text>
+    <text x="196" y="48" font-size="12" fill="#8FB5A2">Working set retido por processos que já não precisam dele, mais a standby</text>
+    <text x="196" y="64" font-size="12" fill="#8FB5A2">list — cache de arquivos que o Windows guarda mas não é memória livre.</text>
+    <text x="196" y="86" font-size="9" font-weight="700" fill="#5F8271">O QUE MELHORA NO COMPUTADOR</text>
+    <text x="196" y="102" font-size="12" fill="#D6EFE0">Devolve RAM para abrir apps pesados sem o Windows recorrer ao disco.</text>
+
+    <rect x="852" y="40" width="124" height="32" rx="7" fill="#1B2E25"/>
+    <text x="914" y="61" font-size="12" font-weight="600" fill="#D6EFE0" text-anchor="middle">Liberar memória</text>
+  </g>
+
+  <!-- ===== Menu lateral ===== -->
+  <rect x="1028" y="0" width="252" height="720" fill="#111F19"/>
+  <line x1="1028" y1="0" x2="1028" y2="720" stroke="#1B2E25"/>
+
+  <g transform="translate(1046,20) scale(0.2)">
+    <path d="M 80 6 L 150 30 L 145 96 Q 140 128 80 154 Q 20 128 15 96 L 10 30 Z" fill="url(#brand)"/>
+    <g fill="#0A1410" opacity="0.92">
+      <ellipse cx="80" cy="46" rx="16" ry="19"/>
+      <path d="M 62 82 C 62 74, 98 74, 98 82 C 100 94, 102 100, 102 108
+               C 102 117, 91 121, 80 121 C 69 121, 58 117, 58 108 C 58 100, 60 94, 62 82 Z"/>
+      <circle cx="59" cy="133" r="6.4"/><circle cx="70" cy="137" r="5.6"/>
+      <circle cx="80" cy="138" r="5.2"/><circle cx="90" cy="137" r="4.8"/><circle cx="100" cy="133" r="4.2"/>
+    </g>
+  </g>
+  <text x="1084" y="36" font-size="15" font-weight="700" fill="#F0FDF4">Curupira</text>
+  <text x="1084" y="51" font-size="10" fill="#5F8271">versão 2.2</text>
+
+  <rect x="1036" y="72" width="236" height="34" rx="7" fill="#1B2E25"/>
+  <rect x="1036" y="78" width="3" height="22" rx="1.5" fill="#34D399"/>
+  <text x="1052" y="93" font-size="12" fill="#34D399">◈</text>
+  <text x="1076" y="93" font-size="12.5" font-weight="600" fill="#F0FDF4">Painel</text>
+
+  <text x="1046" y="132" font-size="9.5" font-weight="700" fill="#5F8271">SEGURANÇA</text>
+  <text x="1052" y="156" font-size="12" fill="#5F8271">⚠</text>
+  <text x="1076" y="156" font-size="12.5" fill="#8FB5A2">Vulnerabilidades</text>
+  <text x="1052" y="184" font-size="12" fill="#5F8271">⭳</text>
+  <text x="1076" y="184" font-size="12.5" fill="#8FB5A2">Windows Update</text>
+  <text x="1052" y="212" font-size="12" fill="#5F8271">◎</text>
+  <text x="1076" y="212" font-size="12.5" fill="#8FB5A2">Catálogo Microsoft</text>
+
+  <text x="1046" y="250" font-size="9.5" font-weight="700" fill="#5F8271">LIMPEZA</text>
+  <text x="1052" y="274" font-size="12" fill="#5F8271">✧</text>
+  <text x="1076" y="274" font-size="12.5" fill="#8FB5A2">Limpeza de disco</text>
+  <text x="1052" y="302" font-size="12" fill="#5F8271">⛃</text>
+  <text x="1076" y="302" font-size="12.5" fill="#8FB5A2">Regras da comunidade</text>
+  <text x="1052" y="330" font-size="12" fill="#5F8271">⚿</text>
+  <text x="1076" y="330" font-size="12.5" fill="#8FB5A2">Registro do Windows</text>
+
+  <text x="1046" y="368" font-size="9.5" font-weight="700" fill="#5F8271">DESEMPENHO</text>
+  <text x="1052" y="392" font-size="12" fill="#5F8271">▤</text>
+  <text x="1076" y="392" font-size="12.5" fill="#8FB5A2">Memória RAM</text>
+  <text x="1052" y="420" font-size="12" fill="#5F8271">⛁</text>
+  <text x="1076" y="420" font-size="12.5" fill="#8FB5A2">Discos</text>
+  <text x="1052" y="448" font-size="12" fill="#5F8271">⏻</text>
+  <text x="1076" y="448" font-size="12.5" fill="#8FB5A2">Inicialização</text>
+
+  <text x="1046" y="486" font-size="9.5" font-weight="700" fill="#5F8271">SISTEMA</text>
+  <text x="1052" y="510" font-size="12" fill="#5F8271">▣</text>
+  <text x="1076" y="510" font-size="12.5" fill="#8FB5A2">Aplicativos</text>
+  <text x="1052" y="538" font-size="12" fill="#5F8271">◐</text>
+  <text x="1076" y="538" font-size="12.5" fill="#8FB5A2">Varredura ao vivo</text>
+  <text x="1052" y="566" font-size="12" fill="#5F8271">☰</text>
+  <text x="1076" y="566" font-size="12.5" fill="#8FB5A2">Logs</text>
+
+  <line x1="1028" y1="660" x2="1280" y2="660" stroke="#1B2E25"/>
+  <rect x="1042" y="674" width="224" height="30" rx="7" fill="#1B2E25"/>
+  <text x="1154" y="694" font-size="11.5" font-weight="600" fill="#D6EFE0" text-anchor="middle">Alternar tema claro / escuro</text>
+</svg>
