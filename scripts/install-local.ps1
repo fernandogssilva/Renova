@@ -65,6 +65,73 @@ Remove-Item -Recurse -Force '$env:LOCALAPPDATA\Curupira' -ErrorAction SilentlyCo
 Remove-Item -Path '$regBase' -Recurse -Force -ErrorAction SilentlyContinue
 "@ | Set-Content -Path (Join-Path $InstallDir 'uninstall.ps1') -Encoding UTF8
 
+# ===========================================================
+#  Pré-requisitos: instala o que o Curupira precisa para rodar
+# ===========================================================
+Write-Host ""
+Write-Host "Verificando pre-requisitos..." -ForegroundColor Cyan
+
+$pinnedPSWU = '2.2.1.5'
+
+# --- Provedor NuGet ---
+if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
+    Write-Host "  Instalando provedor NuGet..." -ForegroundColor Yellow
+    try {
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope AllUsers -ErrorAction Stop | Out-Null
+        Write-Host "    OK" -ForegroundColor Green
+    } catch { Write-Host "    FALHA: $($_.Exception.Message)" -ForegroundColor Red }
+} else { Write-Host "  Provedor NuGet: ja presente" -ForegroundColor DarkGray }
+
+# --- PSGallery confiavel ---
+try {
+    if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+        Register-PSRepository -Default -ErrorAction Stop
+    }
+    if ((Get-PSRepository -Name PSGallery).InstallationPolicy -ne 'Trusted') {
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction Stop
+        Write-Host "  PSGallery marcado como confiavel" -ForegroundColor Green
+    } else { Write-Host "  PSGallery: ja confiavel" -ForegroundColor DarkGray }
+} catch { Write-Host "  FALHA PSGallery: $($_.Exception.Message)" -ForegroundColor Red }
+
+# --- PSWindowsUpdate na versao fixada ---
+$have = Get-Module -ListAvailable -Name PSWindowsUpdate |
+        Where-Object { $_.Version -eq [Version]$pinnedPSWU }
+if (-not $have) {
+    Write-Host "  Instalando PSWindowsUpdate $pinnedPSWU (pode demorar)..." -ForegroundColor Yellow
+    try {
+        Install-Module -Name PSWindowsUpdate -RequiredVersion $pinnedPSWU -Force -Scope AllUsers `
+            -AllowClobber -Confirm:$false -ErrorAction Stop | Out-Null
+        Write-Host "    OK" -ForegroundColor Green
+    } catch { Write-Host "    FALHA: $($_.Exception.Message)" -ForegroundColor Red }
+} else { Write-Host "  PSWindowsUpdate ${pinnedPSWU}: ja presente" -ForegroundColor DarkGray }
+
+# --- Cmdlets nativos: so reporta, nao ha como instalar ---
+Write-Host ""
+Write-Host "Cmdlets do sistema:" -ForegroundColor Cyan
+$cmdlets = [ordered]@{
+    'Get-MpComputerStatus'    = 'Auditoria do Windows Defender'
+    'Get-NetFirewallProfile'  = 'Auditoria de firewall'
+    'Get-BitLockerVolume'     = 'Verificacao de criptografia'
+    'Optimize-Volume'         = 'Desfragmentacao e TRIM'
+    'Get-Tpm'                 = 'Verificacao de TPM'
+    'Get-WindowsOptionalFeature' = 'Deteccao de SMBv1 e PowerShell v2'
+    'Get-NetTCPConnection'    = 'Portas expostas'
+    'Confirm-SecureBootUEFI'  = 'Secure Boot'
+}
+foreach ($c in $cmdlets.GetEnumerator()) {
+    if (Get-Command $c.Key -ErrorAction SilentlyContinue) {
+        Write-Host ("  [OK]      {0,-28} {1}" -f $c.Key, $c.Value) -ForegroundColor DarkGray
+    } else {
+        Write-Host ("  [AUSENTE] {0,-28} {1} - funcao sera pulada" -f $c.Key, $c.Value) -ForegroundColor Yellow
+    }
+}
+
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host ""
+    Write-Host "  [AVISO] winget ausente. Instale o App Installer pela Microsoft Store" -ForegroundColor Yellow
+    Write-Host "          para habilitar a atualizacao de aplicativos." -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "Instalado. Atalho: $startMenu" -ForegroundColor Green
 Write-Host "Executável: $(Join-Path $InstallDir $exeName)"

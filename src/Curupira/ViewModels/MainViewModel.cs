@@ -25,6 +25,7 @@ public partial class MainViewModel : ObservableObject
     private readonly MemoryService _memory;
     private readonly Winapp2Service _winapp2;
     private readonly RegistryAuditService _registry;
+    private readonly PrerequisiteService _prereq;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
     private CancellationTokenSource? _cts;
@@ -43,6 +44,7 @@ public partial class MainViewModel : ObservableObject
         _memory = new MemoryService();
         _winapp2 = new Winapp2Service();
         _registry = new RegistryAuditService();
+        _prereq = new PrerequisiteService(ps);
         Winapp2DatabaseStatus = _winapp2.DatabaseExists
             ? $"Base carregada ({_winapp2.DatabaseDate:dd/MM/yyyy})"
             : "Base ainda não baixada";
@@ -133,6 +135,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _registrySelectedCount;
     [ObservableProperty] private string _registryStatus = "Nenhuma análise executada";
     [ObservableProperty] private string _lastRegistryBackup = "";
+
+    // ================= PRE-REQUISITOS =================
+    public ObservableCollection<Prerequisite> Prerequisites { get; } = new();
+    [ObservableProperty] private string _prereqSummary = "Ainda não verificado";
+    [ObservableProperty] private int _prereqMissingCount;
+    [ObservableProperty] private int _prereqWarningCount;
+    [ObservableProperty] private bool _prereqHasInstallable;
 
     [ObservableProperty] private int _healthScore = 100;
     [ObservableProperty] private string _healthLabel = "Aguardando varredura";
@@ -419,6 +428,7 @@ public partial class MainViewModel : ObservableObject
                 RunStep("Varrendo vulnerabilidades (MSRC)...",     () => ScanVulnerabilitiesAsync(3, _cts.Token)),
             };
             RefreshMemorySnapshot();
+            _ = CheckPrerequisitesQuietAsync(_cts.Token);
             await Task.WhenAll(tasks);
             RefreshMemorySnapshot();
             RefreshProcesses();
@@ -1146,6 +1156,80 @@ public partial class MainViewModel : ObservableObject
             System.Diagnostics.Process.Start("explorer.exe", _registry.BackupDirectory);
         }
         catch (Exception ex) { AppendLog($"Nao foi possivel abrir a pasta: {ex.Message}"); }
+    }
+
+    /// <summary>Verificacao silenciosa no refresh, sem ocupar a barra de progresso.</summary>
+    private async Task CheckPrerequisitesQuietAsync(CancellationToken ct)
+    {
+        try
+        {
+            var list = await _prereq.CheckAsync(null, ct);
+            RunOnUi(() =>
+            {
+                Prerequisites.Clear();
+                foreach (var i in list) Prerequisites.Add(i);
+                PrereqMissingCount = list.Count(i => i.Status == PrereqStatus.Missing);
+                PrereqWarningCount = list.Count(i => i.Status == PrereqStatus.Warning);
+                PrereqHasInstallable = list.Any(i => i.Status != PrereqStatus.Ok && i.Installable);
+                PrereqSummary = PrereqMissingCount == 0 && PrereqWarningCount == 0
+                    ? "Tudo pronto — todos os componentes disponíveis."
+                    : $"{PrereqMissingCount} faltando · {PrereqWarningCount} com limitação";
+            });
+        }
+        catch { }
+    }
+
+    // ================= PRE-REQUISITOS =================
+
+    [RelayCommand]
+    private async Task CheckPrerequisitesAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        const string mod = "Pré-requisitos";
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            ReportStart(mod, "Verificando cmdlets e módulos necessários...");
+            var list = await _prereq.CheckAsync(AppendLog, _cts.Token);
+
+            RunOnUi(() =>
+            {
+                Prerequisites.Clear();
+                foreach (var i in list) Prerequisites.Add(i);
+                PrereqMissingCount = list.Count(i => i.Status == PrereqStatus.Missing);
+                PrereqWarningCount = list.Count(i => i.Status == PrereqStatus.Warning);
+                PrereqHasInstallable = list.Any(i => i.Status != PrereqStatus.Ok && i.Installable);
+                PrereqSummary = PrereqMissingCount == 0 && PrereqWarningCount == 0
+                    ? "Tudo pronto — todos os componentes disponíveis."
+                    : $"{PrereqMissingCount} faltando · {PrereqWarningCount} com limitação";
+            });
+            ReportDone(mod, PrereqMissingCount, PrereqSummary);
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task InstallPrerequisitesAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, "Instalando componentes ausentes...");
+            AppendLog("== Instalacao de pre-requisitos ==");
+            var ok = await _prereq.InstallMissingAsync(AppendLog, _cts.Token);
+            StatusText = ok
+                ? "Componentes instalados com sucesso."
+                : "Instalação parcial — veja os logs para detalhes.";
+            await CheckPrerequisitesAsync();
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
     }
 
     [RelayCommand]
