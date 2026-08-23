@@ -1108,6 +1108,81 @@
                     </Grid>
                 </TabItem>
 
+                <!-- 13 · PRÉ-REQUISITOS -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Pré-requisitos" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Style="{StaticResource SectionSubtitle}"
+                                       Text="Cmdlets e módulos que o Curupira usa. O que puder ser instalado, ele instala; o que depender da edição do Windows, ele avisa e desliga a função correspondente em vez de falhar em silêncio."/>
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Padding="12" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding PrereqSummary}" FontSize="13.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Fg0Brush}"/>
+                                    <TextBlock FontSize="11" Margin="0,3,0,0" Foreground="{DynamicResource Fg3Brush}">
+                                        <Run Text="Instaláveis pelo Curupira: provedor NuGet, PSGallery e PSWindowsUpdate."/>
+                                        <Run Text="Winget precisa vir da Microsoft Store."/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Verificar" Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding CheckPrerequisitesCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                                    <Button Content="Instalar o que falta" Style="{StaticResource FireButton}"
+                                            Command="{Binding InstallPrerequisitesCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding Prerequisites}"
+                                  Style="{StaticResource DataGridBase}" IsReadOnly="True" RowHeight="54">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Estado" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="7,3" HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding StatusColor, Converter={StaticResource Hex2B}}">
+                                                <TextBlock Text="{Binding StatusText}" Foreground="#0A1410"
+                                                           FontSize="10.5" FontWeight="Bold"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Componente" Width="290">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource Fg0Brush}"/>
+                                                <TextBlock Text="{Binding Detail}" FontSize="11"
+                                                           Foreground="{DynamicResource Fg3Brush}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="Usado por" Binding="{Binding UsedBy}" Width="*"/>
+                                <DataGridTextColumn Header="Como resolver" Binding="{Binding FixHint}" Width="330" FontSize="10.5"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
                 <!-- 10 · LOGS -->
                 <TabItem>
                     <Grid>
@@ -1149,7 +1224,7 @@
                     <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg3Brush}"
                                FontSize="11.5" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                               Text="Curupira 2.2 · DataSec"/>
+                               Text="Curupira 2.3 · DataSec"/>
                 </Grid>
             </Border>
         </Grid>
@@ -1173,7 +1248,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Curupira" FontSize="16" FontWeight="Bold"
                                        Foreground="{DynamicResource Fg0Brush}"/>
-                            <TextBlock Text="versão 2.2" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                            <TextBlock Text="versão 2.3" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -1212,8 +1287,10 @@
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=8, Mode=TwoWay}"/>
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="◐" Content="Varredura ao vivo"
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=9, Mode=TwoWay}"/>
-                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="☰" Content="Logs"
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⚙" Content="Pré-requisitos"
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=12, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="☰" Content="Logs"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=13, Mode=TwoWay}"/>
                     </StackPanel>
                 </ScrollViewer>
 
