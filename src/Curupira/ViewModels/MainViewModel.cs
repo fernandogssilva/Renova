@@ -1417,7 +1417,11 @@ public partial class MainViewModel : ObservableObject
         var os = _catalog.GetCurrentOsBuild();
         var installed = await _catalog.GetInstalledKbsAsync(ct);
 
-        var msrcTask  = _vuln.ScanAsync(os, installed, monthsBack, msg =>
+        var latestPatch = await _catalog.GetLatestPatchDateAsync(ct);
+        if (latestPatch is { } lp)
+            AppendLog($"Patch mais recente instalado: {lp:dd/MM/yyyy} — CVEs anteriores a essa data ja estao cobertas pela cumulativa.");
+
+        var msrcTask  = _vuln.ScanAsync(os, installed, monthsBack, latestPatch, msg =>
         {
             AppendLog(msg);
             ReportProgress(modMsrc, 50, msg);

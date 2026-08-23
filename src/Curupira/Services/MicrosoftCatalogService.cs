@@ -70,6 +70,32 @@ public sealed class MicrosoftCatalogService
             IsWindows11: isWin11);
     }
 
+    /// <summary>
+    /// Data de instalacao do patch mais recente. Atualizacoes cumulativas do
+    /// Windows corrigem TODAS as CVEs publicadas antes delas, mesmo que a KB
+    /// especifica de cada CVE nunca apareca no Get-HotFix. Sem esse corte, o
+    /// app reporta como pendente centenas de falhas ja corrigidas.
+    /// </summary>
+    public async Task<DateTime?> GetLatestPatchDateAsync(CancellationToken ct)
+    {
+        const string script = @"
+Get-HotFix | Where-Object { $_.InstalledOn } |
+    Sort-Object InstalledOn -Descending |
+    Select-Object -First 1 -ExpandProperty InstalledOn |
+    ForEach-Object { $_.ToString('yyyy-MM-dd') }
+";
+        var r = await _ps.RunAsync(script, null, ct);
+        var line = r.StdOut?.Trim();
+        if (!string.IsNullOrWhiteSpace(line) &&
+            DateTime.TryParse(line.Split('\n')[0].Trim(), System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var d))
+        {
+            _log.Information("Patch mais recente instalado em {Date:yyyy-MM-dd}", d);
+            return d;
+        }
+        return null;
+    }
+
     public async Task<List<string>> GetInstalledKbsAsync(CancellationToken ct)
     {
         const string script = @"

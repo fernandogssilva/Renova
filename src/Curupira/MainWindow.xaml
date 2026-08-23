@@ -381,9 +381,9 @@
 
                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
                                            Foreground="{DynamicResource Fg2Brush}" FontSize="12.5">
-                                    <Run Text="{Binding SelectedVulnCount}" FontWeight="Bold"/>
+                                    <Run Text="{Binding SelectedVulnCount, Mode=OneWay}" FontWeight="Bold"/>
                                     <Run Text="selecionada(s) de"/>
-                                    <Run Text="{Binding TotalVulnCount}"/>
+                                    <Run Text="{Binding TotalVulnCount, Mode=OneWay}"/>
                                 </TextBlock>
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -394,7 +394,7 @@
                                             Command="{Binding ApplySelectedPatchesCommand}"
                                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}">
                                         <TextBlock>
-                                            <Run Text="Corrigir selecionadas ("/><Run Text="{Binding SelectedVulnCount}"/><Run Text=")"/>
+                                            <Run Text="Corrigir selecionadas ("/><Run Text="{Binding SelectedVulnCount, Mode=OneWay}"/><Run Text=")"/>
                                         </TextBlock>
                                     </Button>
                                 </StackPanel>
@@ -533,10 +533,10 @@
                                     IsEnabled="{Binding CatalogHasPending}"/>
                         </StackPanel>
                         <TextBlock Grid.Row="2" Margin="2,0,0,10" FontSize="12" Foreground="{DynamicResource Fg2Brush}">
-                            <Run Text="Local:"/><Run Text="{Binding CurrentOsBuild}" FontWeight="SemiBold"/>
+                            <Run Text="Local:"/><Run Text="{Binding CurrentOsBuild, Mode=OneWay}" FontWeight="SemiBold"/>
                             <LineBreak/>
-                            <Run Text="Oficial:"/><Run Text="{Binding LatestOfficialKb}" FontWeight="SemiBold"/>
-                            <Run Text="(build"/><Run Text="{Binding LatestOfficialBuild}"/><Run Text=")"/>
+                            <Run Text="Oficial:"/><Run Text="{Binding LatestOfficialKb, Mode=OneWay}" FontWeight="SemiBold"/>
+                            <Run Text="(build"/><Run Text="{Binding LatestOfficialBuild, Mode=OneWay}"/><Run Text=")"/>
                         </TextBlock>
                         <DataGrid Grid.Row="3" Style="{StaticResource DataGridBase}" IsReadOnly="True"
                                   ItemsSource="{Binding CatalogPending}">
@@ -625,7 +625,7 @@
                                     <TextBlock Margin="0,10,0,0" Style="{StaticResource CardCaption}"
                                                Visibility="{Binding LastMemoryFreedMB, Converter={StaticResource Cnt2V}}">
                                         <Run Text="Última liberação:"/>
-                                        <Run Text="{Binding LastMemoryFreedMB, StringFormat={}{0:N0} MB}"
+                                        <Run Text="{Binding LastMemoryFreedMB, StringFormat={}{0:N0} MB, Mode=OneWay}"
                                              FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}"/>
                                     </TextBlock>
                                 </StackPanel>
@@ -643,7 +643,7 @@
                                             <TextBlock Text="Aplicativos consumindo memória" Style="{StaticResource CardTitle}"/>
                                             <TextBlock Style="{StaticResource CardCaption}" Margin="0,2,0,0">
                                                 <Run Text="Somados por aplicativo —"/>
-                                                <Run Text="{Binding TopProcessesTotalMB, StringFormat={}{0:N0} MB}" FontWeight="Bold"/>
+                                                <Run Text="{Binding TopProcessesTotalMB, StringFormat={}{0:N0} MB, Mode=OneWay}" FontWeight="Bold"/>
                                                 <Run Text="no total. Compactar libera memória sem fechar; encerrar fecha o aplicativo."/>
                                             </TextBlock>
                                         </StackPanel>
@@ -665,7 +665,7 @@
                                                                        Foreground="{DynamicResource Fg0Brush}"
                                                                        TextTrimming="CharacterEllipsis"/>
                                                             <TextBlock FontSize="10.5" Foreground="{DynamicResource Fg3Brush}">
-                                                                <Run Text="{Binding Detail}"/><Run Text=" · "/><Run Text="{Binding Origin}"/>
+                                                                <Run Text="{Binding Detail, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Origin, Mode=OneWay}"/>
                                                             </TextBlock>
                                                         </StackPanel>
                                                     </DataTemplate>
@@ -880,7 +880,7 @@
                                                                Foreground="{DynamicResource Fg2Brush}" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock FontSize="11" Margin="0,2,0,0"
                                                                Foreground="{DynamicResource Fg3Brush}" TextTrimming="CharacterEllipsis">
-                                                        <Run Text="Último:" FontStyle="Italic"/><Run Text="{Binding LastFoundItem}"/>
+                                                        <Run Text="Último:" FontStyle="Italic"/><Run Text="{Binding LastFoundItem, Mode=OneWay}"/>
                                                     </TextBlock>
                                                     <TextBlock Text="{Binding ActionHint}" FontSize="11.5" FontWeight="SemiBold"
                                                                Margin="0,5,0,0" TextWrapping="Wrap"
@@ -926,12 +926,12 @@
 
                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
                                            FontSize="12.5" Foreground="{DynamicResource Fg2Brush}">
-                                    <Run Text="{Binding Winapp2SelectedCount}" FontWeight="Bold"/>
+                                    <Run Text="{Binding Winapp2SelectedCount, Mode=OneWay}" FontWeight="Bold"/>
                                     <Run Text="selecionados ·"/>
-                                    <Run Text="{Binding Winapp2TotalMB, StringFormat={}{0:N1} MB}" FontWeight="Bold"
+                                    <Run Text="{Binding Winapp2TotalMB, StringFormat={}{0:N1} MB, Mode=OneWay}" FontWeight="Bold"
                                          Foreground="{DynamicResource AccentBrush}"/>
                                     <Run Text="no total ·"/>
-                                    <Run Text="{Binding Winapp2DatabaseStatus}"/>
+                                    <Run Text="{Binding Winapp2DatabaseStatus, Mode=OneWay}"/>
                                 </TextBlock>
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -1038,9 +1038,9 @@
 
                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
                                            FontSize="12.5" Foreground="{DynamicResource Fg2Brush}">
-                                    <Run Text="{Binding RegistrySelectedCount}" FontWeight="Bold"/>
+                                    <Run Text="{Binding RegistrySelectedCount, Mode=OneWay}" FontWeight="Bold"/>
                                     <Run Text="selecionada(s) ·"/>
-                                    <Run Text="{Binding RegistryStatus}"/>
+                                    <Run Text="{Binding RegistryStatus, Mode=OneWay}"/>
                                 </TextBlock>
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -1059,7 +1059,7 @@
                         <TextBlock Grid.Row="3" Margin="2,0,0,8" FontSize="11.5"
                                    Foreground="{DynamicResource SuccessBrush}" TextTrimming="CharacterEllipsis"
                                    Visibility="{Binding LastRegistryBackup, Converter={StaticResource B2V}}">
-                            <Run Text="Último backup:"/><Run Text="{Binding LastRegistryBackup}"/>
+                            <Run Text="Último backup:"/><Run Text="{Binding LastRegistryBackup, Mode=OneWay}"/>
                         </TextBlock>
 
                         <DataGrid Grid.Row="4" ItemsSource="{Binding RegistryFindings}"
@@ -1374,10 +1374,10 @@
 
                     <TextBlock Margin="0,16,0,8" HorizontalAlignment="Center" FontSize="13"
                                Foreground="{DynamicResource Fg2Brush}">
-                        <Run Text="{Binding FixesDone}" FontWeight="Bold" FontSize="17"
+                        <Run Text="{Binding FixesDone, Mode=OneWay}" FontWeight="Bold" FontSize="17"
                              Foreground="{DynamicResource Fg0Brush}"/>
                         <Run Text="de"/>
-                        <Run Text="{Binding FixesTotal}" FontWeight="Bold"/>
+                        <Run Text="{Binding FixesTotal, Mode=OneWay}" FontWeight="Bold"/>
                         <Run Text="concluídas"/>
                     </TextBlock>
 
