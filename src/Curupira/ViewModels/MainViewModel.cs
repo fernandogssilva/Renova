@@ -104,6 +104,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _fixesDone;
     [ObservableProperty] private int _selectedVulnCount;
     [ObservableProperty] private int _vulnLikelyPatchedCount;
+    [ObservableProperty] private int _sevCritical;
+    [ObservableProperty] private int _sevImportant;
+    [ObservableProperty] private int _sevModerate;
+    [ObservableProperty] private int _sevLow;
+    [ObservableProperty] private int _sevInformational;
+    [ObservableProperty] private int _vulnNoPatchCount;
 
     /// <summary>
     /// Por padrao a lista mostra so o que esta realmente pendente. As CVEs
@@ -1748,6 +1754,19 @@ public partial class MainViewModel : ObservableObject
                 Vulnerabilities.Add(row);
             }
             VulnLikelyPatchedCount = combined.Count(v => v.LikelyPatched);
+
+            // Distribuicao por severidade, contando so o que esta pendente
+            var pend = combined.Where(v => !v.LikelyPatched).ToList();
+            int PorSev(string s) => pend.Count(v => string.Equals(v.Severity, s, StringComparison.OrdinalIgnoreCase));
+            SevCritical      = PorSev("Critical");
+            SevImportant     = PorSev("Important");
+            SevModerate      = PorSev("Moderate");
+            SevLow           = PorSev("Low");
+            SevInformational = pend.Count - SevCritical - SevImportant - SevModerate - SevLow;
+            VulnNoPatchCount = pend.Count(v =>
+                !System.Text.RegularExpressions.Regex.IsMatch(v.Kb ?? "", @"^KB\d{5,8}$",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+                && !v.Cve.StartsWith("SEC-", StringComparison.OrdinalIgnoreCase));
             TotalVulnCount = combined.Count(v => !v.LikelyPatched);
             CriticalVulnCount = combined.Count(v =>
                 !v.LikelyPatched && v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));

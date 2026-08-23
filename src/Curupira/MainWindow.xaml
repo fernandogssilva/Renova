@@ -411,8 +411,54 @@
                             </Grid>
                         </Border>
 
-                        <TextBlock Grid.Row="2" Text="{Binding VulnScanStatus}" Margin="2,0,0,8"
-                                   Foreground="{DynamicResource Fg3Brush}" FontSize="11.5"/>
+                        <!-- Distribuição por severidade -->
+                        <Border Grid.Row="2" Style="{StaticResource CardBorder}" Padding="12,10" Margin="0,0,0,10">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Distribuição por severidade" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock Text="(apenas as pendentes)" FontSize="10.5" Margin="7,1,0,0"
+                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                </StackPanel>
+
+                                <UniformGrid Rows="1" Margin="0,9,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SevCritical}" FontSize="21" FontWeight="Bold"
+                                                   Foreground="{DynamicResource CriticalBrush}"/>
+                                        <TextBlock Text="Críticas" Style="{StaticResource CardCaption}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SevImportant}" FontSize="21" FontWeight="Bold"
+                                                   Foreground="{DynamicResource DangerBrush}"/>
+                                        <TextBlock Text="Importantes" Style="{StaticResource CardCaption}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SevModerate}" FontSize="21" FontWeight="Bold"
+                                                   Foreground="{DynamicResource WarningBrush}"/>
+                                        <TextBlock Text="Moderadas" Style="{StaticResource CardCaption}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SevLow}" FontSize="21" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccentBrush}"/>
+                                        <TextBlock Text="Baixas" Style="{StaticResource CardCaption}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SevInformational}" FontSize="21" FontWeight="Bold"
+                                                   Foreground="{DynamicResource Fg2Brush}"/>
+                                        <TextBlock Text="Informativas" Style="{StaticResource CardCaption}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding VulnNoPatchCount}" FontSize="21" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccentAltBrush}"/>
+                                        <TextBlock Text="Sem patch" Style="{StaticResource CardCaption}"
+                                                   ToolTip="Mitigação, workaround ou falha ainda sem correção publicada pela Microsoft."/>
+                                    </StackPanel>
+                                </UniformGrid>
+
+                                <TextBlock Text="{Binding VulnScanStatus}" Margin="0,10,0,0"
+                                           FontSize="11.5" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource Fg3Brush}"/>
+                            </StackPanel>
+                        </Border>
 
                         <DataGrid Grid.Row="3" Style="{StaticResource DataGridBase}"
                                   ItemsSource="{Binding Vulnerabilities}" IsReadOnly="False"
@@ -447,10 +493,16 @@
                                                             <DataTrigger Binding="{Binding Severity}" Value="Moderate">
                                                                 <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
                                                             </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Low">
+                                                                <Setter Property="Background" Value="{DynamicResource Bg3Brush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Informational">
+                                                                <Setter Property="Background" Value="{DynamicResource Bg2Brush}"/>
+                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <TextBlock Text="{Binding Severity}" Foreground="White"
+                                                <TextBlock Text="{Binding SeverityLabel}" Foreground="White"
                                                            FontWeight="SemiBold" FontSize="10.5"/>
                                             </Border>
                                         </DataTemplate>

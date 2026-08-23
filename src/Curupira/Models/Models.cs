@@ -170,6 +170,21 @@ public sealed class VulnRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObj
     public DateTime ReleaseDate => Item.ReleaseDate;
     public bool LikelyPatched => Item.LikelyPatched;
 
+    /// <summary>Rotulo em portugues. O valor interno segue em ingles porque
+    /// e o vocabulario do MSRC e da auditoria local.</summary>
+    public string SeverityLabel => Severity?.ToLowerInvariant() switch
+    {
+        "critical"      => "Critica",
+        "important"     => "Importante",
+        "moderate"      => "Moderada",
+        "low"           => "Baixa",
+        "informational" => "Informativa",
+        _               => string.IsNullOrWhiteSpace(Severity) ? "Informativa" : Severity
+    };
+
+    /// <summary>Sem KB publicada: exige acao manual ou nao ha correcao.</summary>
+    public bool HasNoPatch => !IsAutoFixable && !IsLocalFinding;
+
     /// <summary>KBs reais (KBxxxxxxx) podem ser aplicadas automaticamente.
     /// Findings locais trazem cmdlet/registry no campo Kb e sao manuais.</summary>
     public bool IsAutoFixable =>
