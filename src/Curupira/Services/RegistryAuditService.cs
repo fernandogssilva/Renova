@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using Serilog;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 /// <summary>
 /// Análise e limpeza de registro.

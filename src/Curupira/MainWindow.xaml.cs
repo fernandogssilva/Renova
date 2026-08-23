@@ -5,9 +5,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
-using SysMaintenanceHub.Services;
+using Curupira.Services;
 
-namespace SysMaintenanceHub;
+namespace Curupira;
 
 public partial class MainWindow : Window
 {

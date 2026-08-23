@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Win32;
 using Serilog;
-using SysMaintenanceHub.Models;
+using Curupira.Models;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 public sealed class StartupAppsService
 {

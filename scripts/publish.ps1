@@ -1,4 +1,4 @@
-# Publica o SysMaintenanceHub como single-file self-contained ou framework-dependent.
+# Publica o Curupira como single-file self-contained ou framework-dependent.
 # Rode: powershell -ExecutionPolicy Bypass -File .\scripts\publish.ps1 [-SelfContained]
 param(
     [switch]$SelfContained,
@@ -7,8 +7,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$proj = Join-Path $root 'src\SysMaintenanceHub\SysMaintenanceHub.csproj'
-$out  = Join-Path $root 'src\SysMaintenanceHub\bin\publish'
+$proj = Join-Path $root 'src\Curupira\Curupira.csproj'
+$out  = Join-Path $root 'src\Curupira\bin\publish'
 
 if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $out | Out-Null

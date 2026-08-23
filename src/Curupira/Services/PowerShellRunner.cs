@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 /// <summary>
 /// Executes a PowerShell script block, streams stdout/stderr to a callback,

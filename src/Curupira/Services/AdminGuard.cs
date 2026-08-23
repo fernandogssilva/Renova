@@ -1,6 +1,6 @@
 using System.Security.Principal;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 public static class AdminGuard
 {

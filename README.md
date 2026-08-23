@@ -1,4 +1,4 @@
-# SysMaintenanceHub
+# Curupira
 
 Dashboard visual para manutenção e atualização do Windows — construído em **WPF / .NET 8**, com temas dark/light, execução silenciosa (sem prompts intermediários) e logs em tempo real.
 
@@ -33,7 +33,7 @@ Dashboard visual para manutenção e atualização do Windows — construído em
 | **Desfragmentação / TRIM** | `Optimize-Volume -Analyze` para relatório e `-Defrag` para executar. |
 | **Startup Apps** | Lê registros `HKCU/HKLM Run` + `StartupApproved`, mostra ativos vs. desativados, permite alternar. |
 | **Logs** | UI ao vivo (aba **Logs**) + arquivo Serilog rotativo diário. |
-| **Tema Dark / Light** | Alterna e persiste em `%LOCALAPPDATA%\SysMaintenanceHub\theme.cfg`. |
+| **Tema Dark / Light** | Alterna e persiste em `%LOCALAPPDATA%\Curupira\theme.cfg`. |
 | **Auto-elevação** | Manifesto `requireAdministrator` — UAC único no início. |
 
 ---
@@ -44,7 +44,7 @@ O dashboard mostra 6 cartões-KPI acima e uma área com abas:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ ⚡ SysMaintenanceHub                            [Executar tudo] [Tema] │
+│ ⚡ Curupira                            [Executar tudo] [Tema] │
 │    Pronto.                                              ┌─────────────┐│
 │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░ 62%          │             ││
 ├─────────────────────────────────────────────────────────┴─────────────┤│
@@ -68,25 +68,25 @@ O dashboard mostra 6 cartões-KPI acima e uma área com abas:
 
 O projeto entrega **três formas** de rodar, dependendo da sua preferência:
 
-### 1. Duplo clique — `SysMaintenanceHub.bat`
+### 1. Duplo clique — `Curupira.bat`
 Wrapper batch com auto-elevação (UAC). Localiza o EXE em `bin\publish\` ou em `%ProgramFiles%`.
 
 ```
-Duplo clique em SysMaintenanceHub.bat
+Duplo clique em Curupira.bat
 ```
 
-### 2. PowerShell — `SysMaintenanceHub.ps1`
+### 2. PowerShell — `Curupira.ps1`
 Mesmo comportamento, mas com opção `-Build` para compilar antes:
 
 ```powershell
-.\SysMaintenanceHub.ps1                  # roda o EXE existente
-.\SysMaintenanceHub.ps1 -Build           # publica primeiro e depois roda
+.\Curupira.ps1                  # roda o EXE existente
+.\Curupira.ps1 -Build           # publica primeiro e depois roda
 ```
 
-### 3. EXE direto — `SysMaintenanceHub.exe`
+### 3. EXE direto — `Curupira.exe`
 Após publicar, o executável fica em:
 ```
-src\SysMaintenanceHub\bin\publish\SysMaintenanceHub.exe
+src\Curupira\bin\publish\Curupira.exe
 ```
 Duplo clique dispara UAC automaticamente.
 
@@ -117,15 +117,15 @@ Requer [Inno Setup 6](https://jrsoftware.org/isdl.php) instalado.
 & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\setup.iss
 
 # 3. Distribua o setup gerado
-# installer\output\SysMaintenanceHub-Setup-1.0.0.exe
+# installer\output\Curupira-Setup-1.0.0.exe
 ```
 
 O instalador oferece:
-- Escolha do diretório (`%ProgramFiles%\SysMaintenanceHub` por padrão)
+- Escolha do diretório (`%ProgramFiles%\Curupira` por padrão)
 - Ícone no menu iniciar / desktop (opcional)
 - Iniciar no login do Windows (opcional)
 - Registro em **Adicionar/Remover Programas**
-- Desinstalador com limpeza do `%LOCALAPPDATA%\SysMaintenanceHub`
+- Desinstalador com limpeza do `%LOCALAPPDATA%\Curupira`
 
 ### Opção B — Instalação sem Inno (PowerShell)
 
@@ -134,26 +134,26 @@ O instalador oferece:
 .\scripts\install-local.ps1
 ```
 
-Faz o mesmo trabalho: copia para `%ProgramFiles%\SysMaintenanceHub`, cria atalho e registra a desinstalação.
+Faz o mesmo trabalho: copia para `%ProgramFiles%\Curupira`, cria atalho e registra a desinstalação.
 
 ### Opção C — Portable (sem instalar)
 
-Basta rodar o `SysMaintenanceHub.exe` diretamente da pasta `bin\publish\`. Nada é gravado fora de `%LOCALAPPDATA%\SysMaintenanceHub\`.
+Basta rodar o `Curupira.exe` diretamente da pasta `bin\publish\`. Nada é gravado fora de `%LOCALAPPDATA%\Curupira\`.
 
 ---
 
 ## Estrutura do projeto
 
 ```
-SysMaintenanceHub/
-├── SysMaintenanceHub.sln
-├── SysMaintenanceHub.bat            # launcher .bat
-├── SysMaintenanceHub.ps1            # launcher .ps1
+Curupira/
+├── Curupira.sln
+├── Curupira.bat            # launcher .bat
+├── Curupira.ps1            # launcher .ps1
 ├── README.md                        # este manual
 ├── .gitignore
 │
-├── src/SysMaintenanceHub/
-│   ├── SysMaintenanceHub.csproj     # .NET 8 WPF, single-file, publish self-contained
+├── src/Curupira/
+│   ├── Curupira.csproj     # .NET 8 WPF, single-file, publish self-contained
 │   ├── app.manifest                 # UAC requireAdministrator + PerMonitorV2
 │   ├── App.xaml(.cs)                # bootstrap Serilog + tema
 │   ├── MainWindow.xaml(.cs)         # dashboard
@@ -214,7 +214,7 @@ Enumera automaticamente estes alvos (se existirem):
 
 Depois roda `cleanmgr /sagerun:99` com **26 presets** ativados (Update Cleanup, Delivery Optimization Files, Windows Defender, etc.).
 
-Grava data da última limpeza em `%LOCALAPPDATA%\SysMaintenanceHub\last_cleanup.txt`.
+Grava data da última limpeza em `%LOCALAPPDATA%\Curupira\last_cleanup.txt`.
 
 ### 4. Discos (`DefragService.cs`)
 - Para cada drive fixo, roda `Optimize-Volume -DriveLetter X -Analyze` e extrai o `% fragmentado`.
@@ -228,7 +228,7 @@ Grava data da última limpeza em `%LOCALAPPDATA%\SysMaintenanceHub\last_cleanup.
 
 ### 6. Logs (`Serilog` + `App.xaml.cs`)
 - Console + arquivo rotativo diário (14 dias de retenção).
-- Arquivo em `%LOCALAPPDATA%\SysMaintenanceHub\logs\app-YYYYMMDD.log`.
+- Arquivo em `%LOCALAPPDATA%\Curupira\logs\app-YYYYMMDD.log`.
 - Formato: `[timestamp INF] SourceContext :: mensagem`.
 - Captura exceções não tratadas do AppDomain e do dispatcher WPF.
 - UI: aba **Logs** com auto-scroll, mantém últimas 2.000 linhas em memória.
@@ -236,7 +236,7 @@ Grava data da última limpeza em `%LOCALAPPDATA%\SysMaintenanceHub\last_cleanup.
 ### 7. Tema (`ThemeManager.cs`)
 - Dark é o default. Alternar via botão 🌓 no header.
 - Cores em `DarkTheme.xaml` / `LightTheme.xaml` (paleta Tailwind-like).
-- Persiste em `%LOCALAPPDATA%\SysMaintenanceHub\theme.cfg`.
+- Persiste em `%LOCALAPPDATA%\Curupira\theme.cfg`.
 
 ---
 
@@ -244,8 +244,8 @@ Grava data da última limpeza em `%LOCALAPPDATA%\SysMaintenanceHub\last_cleanup.
 
 ```powershell
 # clone
-git clone https://github.com/fernandogssilva/SysMaintenanceHub.git
-cd SysMaintenanceHub
+git clone https://github.com/fernandogssilva/Curupira.git
+cd Curupira
 
 # restore + build
 dotnet restore
@@ -253,21 +253,21 @@ dotnet build -c Release
 
 # publish (opção A: EXE portátil, sem dependência)
 .\scripts\publish.ps1 -SelfContained
-# saída: src\SysMaintenanceHub\bin\publish\SysMaintenanceHub.exe  (~75 MB)
+# saída: src\Curupira\bin\publish\Curupira.exe  (~75 MB)
 
 # publish (opção B: menor, precisa .NET 8 Desktop Runtime no destino)
 .\scripts\publish.ps1
-# saída: src\SysMaintenanceHub\bin\publish\SysMaintenanceHub.exe  (~10 MB)
+# saída: src\Curupira\bin\publish\Curupira.exe  (~10 MB)
 ```
 
 ---
 
 ## Onde ficam os logs e a configuração
 
-Tudo em `%LOCALAPPDATA%\SysMaintenanceHub\`:
+Tudo em `%LOCALAPPDATA%\Curupira\`:
 
 ```
-%LOCALAPPDATA%\SysMaintenanceHub\
+%LOCALAPPDATA%\Curupira\
 ├── logs\
 │   ├── app-20260718.log
 │   ├── app-20260717.log

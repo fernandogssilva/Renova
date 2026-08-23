@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SysMaintenanceHub.Models;
+namespace Curupira.Models;
 
 public sealed record WindowsUpdateItem(string Kb, string Title, string Category, double SizeMB);
 

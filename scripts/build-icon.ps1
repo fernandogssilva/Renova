@@ -4,7 +4,7 @@
     Nao requer ImageMagick.
 #>
 param(
-    [string]$OutPath = "$(Split-Path $PSScriptRoot -Parent)\src\SysMaintenanceHub\Assets\Curupira.ico"
+    [string]$OutPath = "$(Split-Path $PSScriptRoot -Parent)\src\Curupira\Assets\Curupira.ico"
 )
 
 $ErrorActionPreference = 'Stop'

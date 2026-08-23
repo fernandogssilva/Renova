@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Windows;
 using Serilog;
-using SysMaintenanceHub.Services;
+using Curupira.Services;
 
-namespace SysMaintenanceHub;
+namespace Curupira;
 
 public partial class App : Application
 {
