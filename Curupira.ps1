@@ -1,9 +1,9 @@
 <#
-    SysMaintenanceHub - Launcher PowerShell
+    Curupira - Launcher PowerShell
     Auto-elevação. Localiza o EXE em bin\publish ou em %ProgramFiles%.
     Uso:
-        .\SysMaintenanceHub.ps1
-        .\SysMaintenanceHub.ps1 -Build      # publica antes de executar
+        .\Curupira.ps1
+        .\Curupira.ps1 -Build      # publica antes de executar
 #>
 
 param(
@@ -19,14 +19,14 @@ if ($Build) {
 }
 
 $candidates = @(
-    (Join-Path $root 'src\SysMaintenanceHub\bin\publish\SysMaintenanceHub.exe'),
-    "$env:ProgramFiles\SysMaintenanceHub\SysMaintenanceHub.exe",
-    "$env:LOCALAPPDATA\Programs\SysMaintenanceHub\SysMaintenanceHub.exe"
+    (Join-Path $root 'src\Curupira\bin\publish\Curupira.exe'),
+    "$env:ProgramFiles\Curupira\Curupira.exe",
+    "$env:LOCALAPPDATA\Programs\Curupira\Curupira.exe"
 )
 
 $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $exe) {
-    throw "SysMaintenanceHub.exe não encontrado. Rode: .\SysMaintenanceHub.ps1 -Build"
+    throw "Curupira.exe não encontrado. Rode: .\Curupira.ps1 -Build"
 }
 
 Write-Host "Executando: $exe" -ForegroundColor Green

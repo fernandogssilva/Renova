@@ -1,12 +1,12 @@
 ; ============================================================
-;  SysMaintenanceHub - Inno Setup Script
+;  Curupira - Inno Setup Script
 ;  Compile com: "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
 ;  Requer: publicar antes com scripts\publish.ps1
 ; ============================================================
 
-#define AppName           "SysMaintenanceHub"
-#define AppExeName        "SysMaintenanceHub.exe"
-#define AppVersion        "1.0.0"
+#define AppName           "Curupira"
+#define AppExeName        "Curupira.exe"
+#define AppVersion        "2.0.0"
 #define AppPublisher      "DataSec"
 #define AppURL            "https://datasec.com.br/"
 #define AppId             "{{A2E1D6C8-9B4E-4F91-9F0E-7A55D0F1B3C4}"
@@ -22,7 +22,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=no
 OutputDir=output
-OutputBaseFilename=SysMaintenanceHub-Setup-{#AppVersion}
+OutputBaseFilename=Curupira-Setup-{#AppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -65,7 +65,7 @@ Name: "{userstartup}\{#AppName}";        Filename: "{app}\{#AppExeName}"; Tasks:
 Filename: "{app}\{#AppExeName}"; Description: "Iniciar {#AppName}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{localappdata}\SysMaintenanceHub"
+Type: filesandordirs; Name: "{localappdata}\Curupira"
 
 [Code]
 function InitializeSetup(): Boolean;

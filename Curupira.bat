@@ -1,14 +1,14 @@
 @echo off
 :: ===============================================================
-::  SysMaintenanceHub - Launcher (.bat)
+::  Curupira - Launcher (.bat)
 ::  Auto-elevação via UAC. Executa o EXE já publicado.
 :: ===============================================================
 setlocal EnableExtensions
 
-set "EXE=%~dp0src\SysMaintenanceHub\bin\publish\SysMaintenanceHub.exe"
-if not exist "%EXE%" set "EXE=%ProgramFiles%\SysMaintenanceHub\SysMaintenanceHub.exe"
+set "EXE=%~dp0src\Curupira\bin\publish\Curupira.exe"
+if not exist "%EXE%" set "EXE=%ProgramFiles%\Curupira\Curupira.exe"
 if not exist "%EXE%" (
-    echo [ERRO] SysMaintenanceHub.exe nao encontrado.
+    echo [ERRO] Curupira.exe nao encontrado.
     echo Execute scripts\publish.ps1 -SelfContained primeiro
     echo ou instale via scripts\install-local.ps1
     pause

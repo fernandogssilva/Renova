@@ -9,7 +9,7 @@ namespace SysMaintenanceHub;
 public partial class App : Application
 {
     public static string DataDirectory { get; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SysMaintenanceHub");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Curupira");
 
     public static string LogDirectory { get; } = Path.Combine(DataDirectory, "logs");
 
@@ -27,7 +27,7 @@ public partial class App : Application
             .WriteTo.Console()
             .CreateLogger();
 
-        Log.Information("SysMaintenanceHub iniciado. Versão {Version}", typeof(App).Assembly.GetName().Version);
+        Log.Information("Curupira iniciado. Versão {Version}", typeof(App).Assembly.GetName().Version);
 
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
@@ -48,7 +48,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        Log.Information("SysMaintenanceHub encerrado (código {Code})", e.ApplicationExitCode);
+        Log.Information("Curupira encerrado (código {Code})", e.ApplicationExitCode);
         Log.CloseAndFlush();
         base.OnExit(e);
     }

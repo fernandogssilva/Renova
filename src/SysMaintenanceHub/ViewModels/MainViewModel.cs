@@ -22,6 +22,7 @@ public partial class MainViewModel : ObservableObject
     private readonly MicrosoftCatalogService _catalog;
     private readonly VulnerabilityService _vuln;
     private readonly LocalSecurityAuditService _localAudit;
+    private readonly MemoryService _memory;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
     private CancellationTokenSource? _cts;
@@ -37,10 +38,12 @@ public partial class MainViewModel : ObservableObject
         _catalog = new MicrosoftCatalogService(ps);
         _vuln = new VulnerabilityService(_catalog);
         _localAudit = new LocalSecurityAuditService(ps);
+        _memory = new MemoryService();
 
         AppTheme = ThemeManager.Current == Services.AppTheme.Dark ? "Dark" : "Light";
         LastCleanupText = FormatLastCleanup(_cleanup.LastCleanup());
-        AppendLog("Aplicativo iniciado.");
+        RefreshMemorySnapshot();
+        AppendLog("Curupira iniciado.");
         AppendLog($"Executando como administrador: {AdminGuard.IsAdministrator()}");
     }
 
@@ -73,6 +76,23 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _vulnScanStatus = "Nenhuma varredura executada";
     [ObservableProperty] private DateTime? _vulnCheckedAt;
 
+    // --- Navegação lateral (menu à direita) ---
+    [ObservableProperty] private int _selectedSection;
+
+    // --- Memória RAM ---
+    [ObservableProperty] private double _memoryTotalMB;
+    [ObservableProperty] private double _memoryAvailableMB;
+    [ObservableProperty] private int _memoryLoadPercent;
+    [ObservableProperty] private string _memoryStatusText = "—";
+    [ObservableProperty] private double _lastMemoryFreedMB;
+
+    // --- Estado de aplicação de correções (dirige a animação) ---
+    [ObservableProperty] private bool _isApplyingFixes;
+    [ObservableProperty] private string _currentFixTarget = "";
+    [ObservableProperty] private int _fixesTotal;
+    [ObservableProperty] private int _fixesDone;
+    [ObservableProperty] private int _selectedVulnCount;
+
     public ObservableCollection<WindowsUpdateItem> WindowsUpdates { get; } = new();
     public ObservableCollection<WingetUpdateItem> WingetUpdates { get; } = new();
     public ObservableCollection<StartupApp> StartupApps { get; } = new();
@@ -80,7 +100,7 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<CleanableItem> Cleanables { get; } = new();
     public ObservableCollection<string> LogLines { get; } = new();
     public ObservableCollection<KbPendingItem> CatalogPending { get; } = new();
-    public ObservableCollection<VulnerabilityItem> Vulnerabilities { get; } = new();
+    public ObservableCollection<VulnRow> Vulnerabilities { get; } = new();
 
     // Relatórios de varredura ao vivo (estilo CCleaner)
     public ObservableCollection<ScanModuleReport> ScanReports { get; } = new();
@@ -191,7 +211,9 @@ public partial class MainViewModel : ObservableObject
                 RunStep("Consultando catálogo Microsoft...",       () => ScanMicrosoftCatalogAsync(_cts.Token)),
                 RunStep("Varrendo vulnerabilidades (MSRC)...",     () => ScanVulnerabilitiesAsync(3, _cts.Token)),
             };
+            RefreshMemorySnapshot();
             await Task.WhenAll(tasks);
+            RefreshMemorySnapshot();
 
             SetProgress(100, "Refresh concluído.");
             AppendLog("== Refresh finalizado ==");
@@ -242,9 +264,22 @@ public partial class MainViewModel : ObservableObject
 
             // 4. Disk Cleanup (cleanmgr) — separado por ser processo externo que pode
             //    abrir dialog. Envolvo em try isolado para não abortar o resto.
-            await SafeStepAsync("cleanmgr /sagerun:99", 85, async () =>
+            await SafeStepAsync("cleanmgr /sagerun:99", 80, async () =>
             {
                 await _cleanup.RunDiskCleanupAsync(AppendLog, _cts.Token);
+            });
+
+            // 5. Liberação de RAM (por último — depois que tudo já rodou e sujou memória)
+            await SafeStepAsync("Liberação de memória RAM", 90, async () =>
+            {
+                var r = await _memory.CleanAsync(AppendLog, _cts.Token);
+                RunOnUi(() =>
+                {
+                    LastMemoryFreedMB = r.FreedMB;
+                    MemoryAvailableMB = r.After.AvailableMB;
+                    MemoryLoadPercent = r.After.LoadPercent;
+                    MemoryStatusText = $"{r.After.AvailableMB / 1024.0:N1} GB livres de {r.After.TotalMB / 1024.0:N1} GB";
+                });
             });
 
             // 5. Refresh final para atualizar KPIs
@@ -410,24 +445,236 @@ public partial class MainViewModel : ObservableObject
         finally { IsIndeterminate = false; IsBusy = false; }
     }
 
-    [RelayCommand]
-    private async Task ApplyPatchAsync(VulnerabilityItem? item)
+    private void OnVulnRowChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (item is null || IsBusy) return;
+        if (e.PropertyName == nameof(VulnRow.IsSelected))
+            RunOnUi(() => SelectedVulnCount = Vulnerabilities.Count(v => v.IsSelected));
+    }
+
+    [RelayCommand]
+    private void SelectAllVulns()
+    {
+        foreach (var v in Vulnerabilities) v.IsSelected = true;
+        SelectedVulnCount = Vulnerabilities.Count;
+    }
+
+    [RelayCommand]
+    private void SelectCriticalVulns()
+    {
+        foreach (var v in Vulnerabilities)
+            v.IsSelected = v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase);
+        SelectedVulnCount = Vulnerabilities.Count(v => v.IsSelected);
+    }
+
+    [RelayCommand]
+    private void SelectAutoFixableVulns()
+    {
+        foreach (var v in Vulnerabilities) v.IsSelected = v.IsAutoFixable;
+        SelectedVulnCount = Vulnerabilities.Count(v => v.IsSelected);
+    }
+
+    [RelayCommand]
+    private void ClearVulnSelection()
+    {
+        foreach (var v in Vulnerabilities) v.IsSelected = false;
+        SelectedVulnCount = 0;
+    }
+
+    /// <summary>Aplica UMA correção (botão da linha).</summary>
+    [RelayCommand]
+    private async Task ApplyPatchAsync(VulnRow? row)
+    {
+        if (row is null || IsBusy) return;
+        ClearVulnSelection();
+        row.IsSelected = true;
+        SelectedVulnCount = 1;
+        await ApplySelectedPatchesAsync();
+    }
+
+    /// <summary>
+    /// Aplica TODAS as correções selecionadas, em sequência, com estado
+    /// visual por linha (Na fila → Aplicando → Corrigido/Falhou).
+    /// </summary>
+    [RelayCommand]
+    private async Task ApplySelectedPatchesAsync()
+    {
+        if (IsBusy) return;
+        var queue = Vulnerabilities.Where(v => v.IsSelected).ToList();
+        if (queue.Count == 0)
+        {
+            AppendLog("Nenhuma vulnerabilidade selecionada.");
+            StatusText = "Selecione ao menos uma vulnerabilidade.";
+            return;
+        }
+
         _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+
+        try
+        {
+            IsBusy = true;
+            IsApplyingFixes = true;
+            IsIndeterminate = false;
+            FixesTotal = queue.Count;
+            FixesDone = 0;
+
+            AppendLog("========================================");
+            AppendLog($"== CORRECAO EM LOTE: {queue.Count} item(ns) ==");
+            AppendLog("========================================");
+
+            RunOnUi(() => { foreach (var r in queue) r.State = FixState.Queued; });
+
+            int ok = 0, failed = 0, manual = 0;
+
+            foreach (var row in queue)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                RunOnUi(() =>
+                {
+                    row.State = FixState.Applying;
+                    CurrentFixTarget = $"{row.Cve} · {row.Kb}";
+                    Progress = FixesTotal == 0 ? 0 : (FixesDone * 100.0 / FixesTotal);
+                    StatusText = $"Corrigindo {FixesDone + 1}/{FixesTotal}: {row.Cve}";
+                });
+
+                if (!row.IsAutoFixable)
+                {
+                    // Findings locais trazem cmdlet/registry — exigem ação manual.
+                    AppendLog($"[MANUAL] {row.Cve}: aplicar manualmente -> {row.Kb}");
+                    RunOnUi(() => row.State = FixState.Skipped);
+                    manual++;
+                }
+                else
+                {
+                    AppendLog($">>> {row.Cve} — instalando {row.Kb} (severidade {row.Severity})");
+                    var start = DateTime.Now;
+                    try
+                    {
+                        var success = await _wu.InstallByKbAsync(row.Kb, AppendLog, ct);
+                        var dur = (DateTime.Now - start).TotalSeconds;
+                        if (success)
+                        {
+                            AppendLog($"<<< {row.Kb} aplicada em {dur:N1}s");
+                            RunOnUi(() => row.State = FixState.Fixed);
+                            ok++;
+                        }
+                        else
+                        {
+                            AppendLog($"!!! {row.Kb} falhou apos {dur:N1}s");
+                            RunOnUi(() => row.State = FixState.Failed);
+                            failed++;
+                        }
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception ex)
+                    {
+                        AppendLog($"!!! {row.Kb} erro: {ex.Message}");
+                        RunOnUi(() => row.State = FixState.Failed);
+                        failed++;
+                    }
+                }
+
+                RunOnUi(() =>
+                {
+                    FixesDone++;
+                    Progress = FixesTotal == 0 ? 100 : (FixesDone * 100.0 / FixesTotal);
+                });
+            }
+
+            AppendLog($"== FIM: {ok} corrigida(s), {failed} falha(s), {manual} manual(is) ==");
+            StatusText = $"{ok} corrigida(s) · {failed} falha(s) · {manual} manual(is)";
+            SetProgress(100, StatusText);
+
+            if (ok > 0)
+                AppendLog("Reinicie o Windows para concluir a aplicacao das atualizacoes.");
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "Correção cancelada.";
+            AppendLog("== CORRECAO CANCELADA ==");
+            RunOnUi(() =>
+            {
+                foreach (var r in Vulnerabilities.Where(x => x.State is FixState.Queued or FixState.Applying))
+                    r.State = FixState.Pending;
+            });
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Falha na correcao em lote");
+            AppendLog($"ERRO FATAL: {ex.Message}");
+        }
+        finally
+        {
+            IsApplyingFixes = false;
+            CurrentFixTarget = "";
+            IsBusy = false;
+        }
+    }
+
+    // ================= MEMORIA RAM =================
+
+    private void RefreshMemorySnapshot()
+    {
+        var s = _memory.GetSnapshot();
+        RunOnUi(() =>
+        {
+            MemoryTotalMB = s.TotalMB;
+            MemoryAvailableMB = s.AvailableMB;
+            MemoryLoadPercent = s.LoadPercent;
+            MemoryStatusText = s.TotalMB <= 0
+                ? "—"
+                : $"{s.AvailableMB / 1024.0:N1} GB livres de {s.TotalMB / 1024.0:N1} GB";
+        });
+    }
+
+    [RelayCommand]
+    private async Task CleanMemoryAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        const string mod = "Memória RAM";
         try
         {
             IsBusy = true; IsIndeterminate = true;
-            SetProgress(0, $"Aplicando patch {item.Kb} para {item.Cve}...");
-            AppendLog($"== Aplicando patch {item.Kb} ({item.Cve}, severidade {item.Severity}) ==");
-            var ok = await _wu.InstallByKbAsync(item.Kb, AppendLog, _cts.Token);
-            AppendLog(ok
-                ? $"Patch {item.Kb} solicitado. Um reboot pode ser necessário."
-                : $"Falha ao instalar {item.Kb} — ver logs.");
-            await ScanVulnerabilitiesAsync(3, _cts.Token);
+            ReportStart(mod, "Compactando working sets e descartando standby list…");
+            SetProgress(0, "Liberando memória RAM...");
+            AppendLog("== Liberacao de RAM iniciada ==");
+
+            var result = await _memory.CleanAsync(AppendLog, _cts.Token);
+
+            RunOnUi(() =>
+            {
+                LastMemoryFreedMB = result.FreedMB;
+                MemoryTotalMB = result.After.TotalMB;
+                MemoryAvailableMB = result.After.AvailableMB;
+                MemoryLoadPercent = result.After.LoadPercent;
+                MemoryStatusText = $"{result.After.AvailableMB / 1024.0:N1} GB livres de {result.After.TotalMB / 1024.0:N1} GB";
+                StatusText = $"RAM: {result.FreedMB:N0} MB liberados";
+            });
+
+            ReportDone(mod, (int)result.FreedMB,
+                result.FreedMB > 0
+                    ? $"{result.FreedMB:N0} MB liberados · {result.ProcessesTrimmed} processos compactados"
+                    : "Memória já estava otimizada — nada a liberar");
+            SetProgress(100, StatusText);
         }
-        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex)
+        {
+            ReportFailed(mod, ex.Message);
+            AppendLog($"ERRO: {ex.Message}");
+        }
         finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private void RefreshMemory() => RefreshMemorySnapshot();
+
+    [RelayCommand]
+    private void Navigate(string? index)
+    {
+        if (int.TryParse(index, out var i)) SelectedSection = i;
     }
 
     [RelayCommand]
@@ -618,11 +865,18 @@ public partial class MainViewModel : ObservableObject
 
         RunOnUi(() =>
         {
+            foreach (var old in Vulnerabilities) old.PropertyChanged -= OnVulnRowChanged;
             Vulnerabilities.Clear();
-            foreach (var v in combined) Vulnerabilities.Add(v);
+            foreach (var v in combined)
+            {
+                var row = new VulnRow(v);
+                row.PropertyChanged += OnVulnRowChanged;
+                Vulnerabilities.Add(row);
+            }
             TotalVulnCount = combined.Count;
             CriticalVulnCount = combined.Count(v =>
                 v.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase));
+            SelectedVulnCount = 0;
             VulnCheckedAt = DateTime.Now;
             VulnScanStatus = combined.Count == 0
                 ? "Nenhuma vulnerabilidade detectada."

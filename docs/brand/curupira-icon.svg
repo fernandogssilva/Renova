@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#34D399"/>
+      <stop offset="55%"  stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Escudo: protecao do territorio -->
+  <path d="M 80 6 L 150 30 L 145 96 Q 140 128 80 154 Q 20 128 15 96 L 10 30 Z"
+        fill="url(#g)"/>
+
+  <!-- PEGADA INVERTIDA: dedos apontam para BAIXO (para tras) -->
+  <g fill="#0A1410" opacity="0.92">
+    <!-- calcanhar (em cima) -->
+    <ellipse cx="80" cy="46" rx="16" ry="19"/>
+    <!-- planta / metatarso (embaixo, mais largo) -->
+    <path d="M 62 82
+             C 62 74, 98 74, 98 82
+             C 100 94, 102 100, 102 108
+             C 102 117, 91 121, 80 121
+             C 69 121, 58 117, 58 108
+             C 58 100, 60 94, 62 82 Z"/>
+    <!-- dedos, abaixo da planta -->
+    <circle cx="59"  cy="133" r="6.4"/>
+    <circle cx="70"  cy="137" r="5.6"/>
+    <circle cx="80"  cy="138" r="5.2"/>
+    <circle cx="90"  cy="137" r="4.8"/>
+    <circle cx="100" cy="133" r="4.2"/>
+  </g>
+</svg>

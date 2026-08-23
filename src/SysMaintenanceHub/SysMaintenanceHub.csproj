@@ -7,16 +7,21 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>false</UseWindowsForms>
+
     <RootNamespace>SysMaintenanceHub</RootNamespace>
-    <AssemblyName>SysMaintenanceHub</AssemblyName>
+    <AssemblyName>Curupira</AssemblyName>
+    <ApplicationIcon>Assets\Curupira.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets\Wintal.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
-    <FileVersion>1.0.0.0</FileVersion>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+
+    <Version>2.0.0</Version>
+    <FileVersion>2.0.0.0</FileVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <Company>DataSec</Company>
-    <Product>SysMaintenanceHub</Product>
-    <Copyright>© 2026 DataSec — Fernando Silva</Copyright>
+    <Product>Curupira</Product>
+    <AssemblyTitle>Curupira</AssemblyTitle>
+    <Description>Curupira - Manutencao, desempenho e seguranca para Windows</Description>
+    <Copyright>Copyright 2026 DataSec - Fernando Silva</Copyright>
+
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
