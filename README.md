@@ -2,137 +2,127 @@
 
 <img src="docs/brand/curupira-logo.svg" alt="Curupira" width="560">
 
-**Manutenção, desempenho e segurança para Windows**
+**Manutenção, desempenho e segurança para Windows — num painel só.**
 
 [![Release](https://img.shields.io/github/v/release/fernandogssilva/Curupira?style=flat-square&color=10B981)](https://github.com/fernandogssilva/Curupira/releases)
-[![Plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0A1410?style=flat-square)](#requisitos)
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square)](https://dotnet.microsoft.com/download/dotnet/8.0)
-[![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-FB923C?style=flat-square)](LICENSE)
+[![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-10B981?style=flat-square)](LICENSE)
+[![Plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0EA5E9?style=flat-square)](#requisitos)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20WPF-8B5CF6?style=flat-square)](https://dotnet.microsoft.com/)
 
 </div>
 
 ---
 
-> No folclore brasileiro, o Curupira guarda a mata com os pés virados ao contrário — quem tenta seguir suas pegadas caminha para o lado errado e se perde. É o nome certo para uma ferramenta que protege o que é seu.
+Na lenda, o **Curupira** é o guardião da mata que anda com os pés virados ao contrário. Quem tenta seguir suas pegadas vai na direção errada e se perde. É o mesmo princípio de uma boa defesa: proteger o território e confundir quem tenta entrar.
+
+O Curupira reúne num único painel o que hoje exige quatro telas diferentes do Windows — Windows Update, atualização de aplicativos, limpeza de disco, verificação de vulnerabilidades e diagnóstico de configuração insegura. Sem bundleware, sem telemetria, sem popup de upsell.
 
 ---
 
-## O que é
-
-Um painel único que faz o que hoje exige quatro telas diferentes do Windows: verificar vulnerabilidades, instalar atualizações, limpar disco, liberar memória e auditar configurações de segurança.
-
-Sem bundleware, sem telemetria, sem "seu PC está em risco crítico, compre agora".
-
----
-
-## Mapa de funções
+## O que ele faz
 
 ![Mapa de funções](docs/images/mapa-de-funcoes.svg)
 
+📖 **[Documentação completa das funcionalidades →](docs/FUNCIONALIDADES.md)**
+
 ---
 
-## Painel principal
-
-Cada área responde três perguntas: **o que foi encontrado**, **o que aquilo é** e **o que melhora no computador** depois de resolver.
+## O painel
 
 ![Painel](docs/images/painel.svg)
 
----
+Cada área responde três perguntas, em vez de mostrar só um número:
 
-## Correção de vulnerabilidades em lote
-
-Marque várias e corrija de uma vez. Cada linha mostra seu próprio estado enquanto a fila avança.
-
-![Vulnerabilidades](docs/images/vulnerabilidades.svg)
+1. **O que foi encontrado**
+2. **O que é** — a explicação técnica
+3. **O que melhora no computador** — o benefício concreto
 
 ---
 
-## Recursos
+## Destaques
 
-| Área | Módulo | O que faz |
-|---|---|---|
-| **Segurança** | Vulnerabilidades | CVEs da MSRC cruzados com os patches instalados · correção em lote |
-| | Auditoria local | 12 verificações: Defender, Firewall, BitLocker, LSA, SMBv1, RDP/NLA, Secure Boot, TPM… |
-| | Windows Update | Instalação silenciosa via PSWindowsUpdate |
-| | Catálogo Microsoft | Compara sua build com o release-health oficial |
-| **Limpeza** | Limpeza de disco | TEMP, caches de navegador e de desenvolvimento, Windows Update, `cleanmgr` |
-| | Regras da comunidade | Motor **winapp2.ini** — milhares de regras que o CCleaner 7 abandonou |
-| | Registro | 7 categorias de órfãos · **backup `.reg` obrigatório** antes de remover |
-| **Desempenho** | Memória RAM | Compacta working sets e descarta a standby list |
-| | Apps na memória | Lista por consumo · compactar sem fechar ou encerrar |
-| | Discos | Desfragmentação em HDD, TRIM em SSD |
-| | Inicialização | Programas que sobem com o Windows |
-| **Sistema** | Varredura ao vivo | Cada módulo mostrando o que analisa em tempo real |
-| | Logs | Em tela e em arquivo, rotação diária |
+### 🛡️ Vulnerabilidades com correção em lote
+CVEs oficiais da Microsoft (MSRC) somadas a **12 verificações locais** de configuração insegura — SMBv1 ligado, RDP sem NLA, LSA Protection desativada, BitLocker ausente. Marque várias e corrija de uma vez, com estado visual por linha.
 
-📖 **[Documentação completa de cada função](docs/FUNCIONALIDADES.md)**
+### 🗄️ Regras da comunidade (winapp2)
+Suporte à base [winapp2.ini](https://github.com/MoscaDotTo/Winapp2) — milhares de regras mantidas há mais de 15 anos, cobrindo aplicativos que nenhum limpador genérico conhece. **Formato que o CCleaner 7 abandonou.** O Curupira detecta primeiro o que está instalado, e só então mede.
+
+### 🔑 Registro com backup obrigatório
+7 categorias de entradas órfãs. Todo backup `.reg` é feito **antes** da remoção — se o export falhar, a remoção é abortada. Restaurar é duplo clique.
+
+### 🧠 Memória por aplicativo
+Veja quem está consumindo RAM, agrupado por aplicativo. **Compactar** devolve memória sem fechar; **Encerrar** fecha de vez. Processos críticos do Windows vêm bloqueados.
+
+### ⚙️ Pré-requisitos automáticos
+Na instalação, verifica todos os cmdlets necessários e instala o que for instalável. O que depender da edição do Windows, ele avisa e desliga a função — em vez de falhar em silêncio depois.
+
+---
+
+## Honestidade técnica
+
+O app declara na própria interface o que **não** funciona como prometido por aí:
+
+> **Limpar registro não acelera o Windows.** O registro tem milhões de chaves indexadas em memória — remover algumas centenas não muda tempo de boot nem uso de RAM. O ganho real é higiene e, no caso das regras de firewall órfãs, segurança.
+
+> **Liberar RAM não "cria" memória.** O ganho é perceptível depois de fechar aplicativos pesados. Como efeito colateral, o cache de arquivos esfria — por isso não vale executar de minuto em minuto.
+
+Por isso o Curupira **não** varre CLSID em massa, fontes nem Shared DLLs. É exatamente onde os otimizadores de mercado quebram instalações.
 
 ---
 
 ## Instalação
 
-### Opção 1 — Baixar o executável
+### Baixar pronto
 
-Baixe o `Curupira.exe` na [página de releases](https://github.com/fernandogssilva/Curupira/releases). É self-contained: **não precisa instalar o .NET**.
+Pegue o `Curupira.exe` na [página de releases](https://github.com/fernandogssilva/Curupira/releases) e execute. Ele solicita elevação sozinho.
 
-Confira o hash antes de executar:
+Cada release traz o hash **SHA-256** para você conferir a integridade:
 
 ```powershell
-Get-FileHash Curupira.exe -Algorithm SHA256
+Get-FileHash .\Curupira.exe -Algorithm SHA256
 ```
 
-### Opção 2 — Instalar com atalhos
+> O binário ainda **não é assinado**, então o Windows exibe *Fornecedor: Desconhecido* no UAC. Certificado de code signing está no roadmap.
+
+### Instalar com atalhos e registro
 
 ```powershell
 # PowerShell como Administrador
 .\scripts\install-local.ps1
 ```
 
-Copia para `%ProgramFiles%\Curupira`, cria atalhos no Desktop e no Menu Iniciar, e registra em Adicionar/Remover Programas.
+Copia para `%ProgramFiles%\Curupira`, cria atalhos no desktop e no menu Iniciar, registra em Adicionar/Remover Programas e **verifica e instala os pré-requisitos**.
 
-### Opção 3 — Compilar do código
+### Compilar do código-fonte
 
 ```powershell
 git clone https://github.com/fernandogssilva/Curupira.git
 cd Curupira
+dotnet restore
 .\scripts\publish.ps1 -SelfContained
 ```
 
-O executável sai em `src\Curupira\bin\publish\Curupira.exe`.
+---
+
+## Como rodar
+
+| Forma | Arquivo |
+|---|---|
+| Duplo clique | `Curupira.bat` |
+| PowerShell | `.\Curupira.ps1` (use `-Build` para compilar antes) |
+| Executável | `Curupira.exe` |
 
 ---
 
 ## Requisitos
 
-- Windows 10 20H1+ ou Windows 11 · x64
-- Executar como Administrador (o app solicita UAC sozinho)
-- PowerShell 5.1+ e Winget (nativos no Windows 11)
-- Módulo `PSWindowsUpdate` — instalado na primeira execução
+- **Windows 10 20H1+** ou **Windows 11**, x64
+- **PowerShell 5.1** (nativo no Windows)
+- **Privilégio de administrador** — solicitado automaticamente
+- **Winget** para atualizar aplicativos (nativo no Windows 11; via Microsoft Store no Windows 10)
+- **PSWindowsUpdate** — instalado automaticamente, em versão fixada e auditada
 
----
-
-## Privacidade
-
-Nenhum dado sai da sua máquina. As únicas chamadas de rede são a fontes públicas:
-
-| Destino | Para quê |
-|---|---|
-| `api.msrc.microsoft.com` | CVEs publicadas pela Microsoft |
-| `learn.microsoft.com` | Build mais recente do Windows |
-| `raw.githubusercontent.com` | Base winapp2.ini (opcional) |
-
-Sem analytics, sem crash reports, sem identificador de máquina. Logs ficam apenas em `%LOCALAPPDATA%\Curupira\logs\`.
-
----
-
-## O que o Curupira deliberadamente não faz
-
-| Não faz | Por quê |
-|---|---|
-| Limpeza de CLSID em massa, fontes ou Shared DLLs | É onde os "otimizadores" quebram instalações |
-| "Secure delete" multi-passe | Em SSD com wear leveling não garante nada |
-| Prometer velocidade ao limpar registro | Não existe ganho mensurável — e o app diz isso na tela |
-| Telemetria ou bundleware | — |
+Se publicar com `-SelfContained`, nenhum runtime extra é necessário.
 
 ---
 
@@ -141,38 +131,46 @@ Sem analytics, sem crash reports, sem identificador de máquina. Logs ficam apen
 ```
 Curupira/
 ├── Curupira.sln
-├── Curupira.bat · Curupira.ps1     launchers com auto-elevação
-├── update.bat                       atualizador de 1 clique
-│
+├── Curupira.bat · Curupira.ps1        launchers com auto-elevação
+├── update.bat                          atualizador de 1 clique
 ├── src/Curupira/
-│   ├── Services/                    15 serviços (um por módulo)
-│   ├── ViewModels/MainViewModel.cs  MVVM
-│   ├── Themes/                      claro, escuro e estilos comuns
-│   ├── Models/ · Converters/
-│   └── Assets/Curupira.ico
-│
-├── installer/setup.iss              Inno Setup 6
-├── scripts/                         publish · install · build-icon
+│   ├── Services/                       16 serviços
+│   ├── ViewModels/MainViewModel.cs     MVVM
+│   ├── Themes/                         paleta clara e escura
+│   └── MainWindow.xaml                 14 seções
+├── installer/setup.iss                 Inno Setup 6
+├── scripts/                            publish · install · build-icon
 └── docs/
-    ├── FUNCIONALIDADES.md
-    ├── brand/ · images/
+    ├── FUNCIONALIDADES.md              documentação completa
+    ├── brand/                          logo e ícone
+    ├── images/                         diagramas
     ├── legal/EULA.md
-    ├── security/SECURITY_AUDIT.md
-    └── strategy/
+    └── security/SECURITY_AUDIT.md
 ```
 
 ---
 
-## Aviso
+## Privacidade
 
-O Curupira executa operações administrativas: instala atualizações, **remove arquivos permanentemente** e altera o registro. Mantenha backups. Leia o [EULA](docs/legal/EULA.md) antes de usar.
+Nenhum dado sai da sua máquina. As únicas chamadas de rede são para fontes públicas oficiais:
 
-O binário ainda **não é assinado**, então o Windows exibe *Fornecedor: Desconhecido* no UAC. Compare o SHA-256 publicado em cada release.
+| Destino | Para quê |
+|---|---|
+| `api.msrc.microsoft.com` | CVEs da Microsoft |
+| `learn.microsoft.com` | Release-health do Windows |
+| `raw.githubusercontent.com` | Base winapp2.ini |
+| `www.powershellgallery.com` | Módulo PSWindowsUpdate |
+
+Sem telemetria, sem analytics, sem crash reports. Os logs ficam só no seu disco, e os caminhos são sanitizados (`C:\Users\<nome>\` vira `C:\Users\%USER%\`) para você poder compartilhá-los sem se expor.
 
 ---
 
+## Licença
+
+MIT — veja [LICENSE](LICENSE). Uso do software está sujeito ao [EULA](docs/legal/EULA.md).
+
 <div align="center">
 
-MIT © 2026 [Fernando Silva](https://github.com/fernandogssilva) · DataSec
+**Curupira** · quem invade, se perde
 
 </div>
