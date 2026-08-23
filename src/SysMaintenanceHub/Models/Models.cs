@@ -170,3 +170,58 @@ public sealed class VulnRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObj
 }
 
 public enum FixState { Pending, Queued, Applying, Fixed, Failed, Skipped }
+
+// ============================================================
+// Card do painel principal: alem do numero, explica o que a
+// area significa e o que muda no computador ao resolver.
+// ============================================================
+public sealed class DashboardItem : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+{
+    public string Area { get; init; } = "";
+    public string Icon { get; init; } = "";
+
+    /// <summary>Indice da secao no menu lateral (para o botao de acao).</summary>
+    public int TargetSection { get; init; }
+
+    public string ActionLabel { get; init; } = "";
+
+    /// <summary>O que essa area representa tecnicamente.</summary>
+    public string WhatItIs { get; init; } = "";
+
+    /// <summary>O que melhora na maquina depois de resolver.</summary>
+    public string WhatItImproves { get; init; } = "";
+
+    private string _value = "0";
+    public string Value { get => _value; set => SetProperty(ref _value, value); }
+
+    private string _valueCaption = "";
+    public string ValueCaption { get => _valueCaption; set => SetProperty(ref _valueCaption, value); }
+
+    private HealthLevel _level = HealthLevel.Ok;
+    public HealthLevel Level
+    {
+        get => _level;
+        set { SetProperty(ref _level, value); OnPropertyChanged(nameof(LevelColor)); OnPropertyChanged(nameof(LevelText)); }
+    }
+
+    public string LevelColor => Level switch
+    {
+        HealthLevel.Critical  => "#EF4444",
+        HealthLevel.Attention => "#FBBF24",
+        HealthLevel.Ok        => "#4ADE80",
+        _ => "#5F8271"
+    };
+
+    public string LevelText => Level switch
+    {
+        HealthLevel.Critical  => "Requer atencao imediata",
+        HealthLevel.Attention => "Pode melhorar",
+        HealthLevel.Ok        => "Tudo certo",
+        _ => ""
+    };
+
+    private bool _needsAction;
+    public bool NeedsAction { get => _needsAction; set => SetProperty(ref _needsAction, value); }
+}
+
+public enum HealthLevel { Ok, Attention, Critical }

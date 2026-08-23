@@ -25,6 +25,7 @@
         <conv:IndexToBoolConverter x:Key="Idx"/>
         <conv:HexToBrushConverter x:Key="Hex2B"/>
         <conv:CountToVisibilityConverter x:Key="Cnt2V"/>
+        <conv:ScoreToArcConverter x:Key="Arc"/>
     </Window.Resources>
 
     <Grid>
@@ -193,56 +194,150 @@
                 <TabItem>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <TextBlock Text="Painel geral" Style="{StaticResource SectionTitle}"/>
-                            <TextBlock Style="{StaticResource SectionSubtitle}"
-                                       Text="Resumo do estado do sistema. Use o menu à direita para agir em cada área."/>
 
-                            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
-                                <StackPanel>
-                                    <TextBlock Text="Ações rápidas" Style="{StaticResource CardTitle}" Margin="0,0,0,10"/>
-                                    <WrapPanel>
-                                        <Button Content="Corrigir vulnerabilidades" Style="{StaticResource FireButton}"
-                                                Command="{Binding NavigateCommand}" CommandParameter="1" Margin="0,0,8,8"/>
-                                        <Button Content="Liberar RAM" Style="{StaticResource PrimaryButton}"
-                                                Command="{Binding CleanMemoryCommand}"
-                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,8"/>
-                                        <Button Content="Limpar disco" Style="{StaticResource PrimaryButton}"
-                                                Command="{Binding RunCleanupCommand}"
-                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,8"/>
-                                        <Button Content="Instalar updates" Style="{StaticResource SecondaryButton}"
-                                                Command="{Binding InstallWindowsUpdatesCommand}"
-                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,8"/>
-                                    </WrapPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Style="{StaticResource CardBorder}">
+                            <!-- ===== Pontuação de saúde ===== -->
+                            <Border Style="{StaticResource CardBorder}" Padding="24" Margin="0,0,0,12">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <Ellipse Grid.Column="0" Width="11" Height="11" Margin="0,0,12,0" VerticalAlignment="Center">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding CatalogHasPending}" Value="True">
-                                                        <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Build do Windows vs. catálogo oficial" Style="{StaticResource CardTitle}"/>
-                                        <TextBlock Text="{Binding CatalogStatus}" Style="{StaticResource CardCaption}" FontSize="12.5"/>
-                                        <TextBlock Text="{Binding CurrentOsBuild}" Style="{StaticResource CardCaption}" Margin="0,3,0,0"/>
+
+                                    <!-- Anel de pontuação -->
+                                    <Grid Grid.Column="0" Width="140" Height="140" Margin="0,0,26,0">
+                                        <Ellipse Width="120" Height="120" Stroke="{DynamicResource Bg2Brush}" StrokeThickness="10"/>
+                                        <Path StrokeThickness="10" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Stroke="{Binding HealthColor, Converter={StaticResource Hex2B}}"
+                                              Data="{Binding HealthScore, Converter={StaticResource Arc}, ConverterParameter='70,70,60'}"/>
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding HealthScore}" FontSize="42" FontWeight="Bold"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{Binding HealthColor, Converter={StaticResource Hex2B}}"/>
+                                            <TextBlock Text="de 100" FontSize="10.5" HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource Fg3Brush}" Margin="0,-6,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="Saúde do sistema" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding HealthLabel}" FontSize="29" FontWeight="Bold"
+                                                   Foreground="{Binding HealthColor, Converter={StaticResource Hex2B}}"
+                                                   Margin="0,2,0,6"/>
+                                        <TextBlock Text="{Binding HealthSummary}" FontSize="13" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource Fg2Brush}" LineHeight="20" MaxWidth="620"/>
+                                        <TextBlock Margin="0,10,0,0" FontSize="11.5" Foreground="{DynamicResource Fg3Brush}">
+                                            <Run Text="A pontuação combina vulnerabilidades, atualizações pendentes, espaço em disco, memória, inicialização e fragmentação."/>
+                                        </TextBlock>
                                     </StackPanel>
-                                    <Button Grid.Column="2" Content="Ver catálogo" Style="{StaticResource SecondaryButton}"
-                                            Command="{Binding NavigateCommand}" CommandParameter="3" VerticalAlignment="Center"/>
+
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" MinWidth="160">
+                                        <Border Background="{DynamicResource Bg2Brush}" CornerRadius="8" Padding="16,12" Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding AreasNeedingAction}" FontSize="30" FontWeight="Bold"
+                                                           HorizontalAlignment="Center"
+                                                           Foreground="{DynamicResource AccentAltBrush}"/>
+                                                <TextBlock Text="áreas precisam de ação" FontSize="10.5" TextAlignment="Center"
+                                                           TextWrapping="Wrap" Foreground="{DynamicResource Fg3Brush}"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Button Content="Corrigir tudo" Style="{StaticResource FireButton}"
+                                                HorizontalAlignment="Stretch"
+                                                Command="{Binding RunFullMaintenanceCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                    </StackPanel>
                                 </Grid>
+                            </Border>
+
+                            <TextBlock Text="O que foi analisado" Style="{StaticResource SectionTitle}" Margin="2,6,0,2"/>
+                            <TextBlock Style="{StaticResource SectionSubtitle}" Margin="2,0,0,12"
+                                       Text="Cada área abaixo mostra o que foi encontrado, o que aquilo significa e o que muda no computador depois de resolver."/>
+
+                            <!-- ===== Cards explicativos ===== -->
+                            <ItemsControl ItemsSource="{Binding DashboardItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,9" Padding="18">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Faixa de estado -->
+                                                <Rectangle Grid.Column="0" Width="4" RadiusX="2" RadiusY="2"
+                                                           Margin="0,0,16,0"
+                                                           Fill="{Binding LevelColor, Converter={StaticResource Hex2B}}"/>
+
+                                                <!-- Número + área -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,18,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Icon}" FontSize="14" Margin="0,0,7,0"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{Binding LevelColor, Converter={StaticResource Hex2B}}"/>
+                                                        <TextBlock Text="{Binding Area}" Style="{StaticResource CardTitle}"
+                                                                   VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Value}" FontSize="27" FontWeight="Bold"
+                                                               Foreground="{DynamicResource Fg0Brush}" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding ValueCaption}" Style="{StaticResource CardCaption}"/>
+                                                    <TextBlock Text="{Binding LevelText}" FontSize="10.5" FontWeight="SemiBold"
+                                                               Margin="0,5,0,0" TextWrapping="Wrap"
+                                                               Foreground="{Binding LevelColor, Converter={StaticResource Hex2B}}"/>
+                                                </StackPanel>
+
+                                                <!-- Explicações -->
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="O QUE É" FontSize="9.5" FontWeight="Bold"
+                                                               Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{Binding WhatItIs}" FontSize="12.5" TextWrapping="Wrap"
+                                                               LineHeight="19" Foreground="{DynamicResource Fg2Brush}"
+                                                               Margin="0,0,0,11"/>
+
+                                                    <TextBlock Text="O QUE MELHORA NO COMPUTADOR" FontSize="9.5" FontWeight="Bold"
+                                                               Foreground="{DynamicResource Fg3Brush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{Binding WhatItImproves}" FontSize="12.5" TextWrapping="Wrap"
+                                                               LineHeight="19" Foreground="{DynamicResource Fg1Brush}"/>
+                                                </StackPanel>
+
+                                                <!-- Ação -->
+                                                <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="20,0,0,0" MinWidth="128">
+                                                    <Button Content="{Binding ActionLabel}" HorizontalAlignment="Stretch"
+                                                            Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding TargetSection}">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding NeedsAction}" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource AccentAltBrush}"/>
+                                                                        <Setter Property="Foreground" Value="White"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Estado vazio -->
+                            <Border Style="{StaticResource CardBorder}" Padding="30"
+                                    Visibility="{Binding AreasNeedingAction, Converter={StaticResource Cnt2V}, ConverterParameter=inv}">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="Nenhuma varredura executada ainda" FontSize="15" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" Foreground="{DynamicResource Fg1Brush}"/>
+                                    <TextBlock Text="Clique em Atualizar no topo para analisar o sistema."
+                                               FontSize="12" Margin="0,6,0,14" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                    <Button Content="Analisar agora" Style="{StaticResource PrimaryButton}"
+                                            HorizontalAlignment="Center" Command="{Binding RefreshAllCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                     </ScrollViewer>
@@ -536,6 +631,94 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- ===== Aplicativos consumindo memória ===== -->
+                            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Aplicativos consumindo memória" Style="{StaticResource CardTitle}"/>
+                                            <TextBlock Style="{StaticResource CardCaption}" Margin="0,2,0,0">
+                                                <Run Text="Somados por aplicativo —"/>
+                                                <Run Text="{Binding TopProcessesTotalMB, StringFormat={}{0:N0} MB}" FontWeight="Bold"/>
+                                                <Run Text="no total. Compactar libera memória sem fechar; encerrar fecha o aplicativo."/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="Atualizar lista" Style="{StaticResource SecondaryButton}"
+                                                VerticalAlignment="Top"
+                                                Command="{Binding RefreshProcessesCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                    </Grid>
+
+                                    <DataGrid ItemsSource="{Binding TopProcesses}" Style="{StaticResource DataGridBase}"
+                                              IsReadOnly="True" MaxHeight="420" Margin="0,10,0,0"
+                                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn Header="Aplicativo" Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Display}" FontSize="12.5" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource Fg0Brush}"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock FontSize="10.5" Foreground="{DynamicResource Fg3Brush}">
+                                                                <Run Text="{Binding Detail}"/><Run Text=" · "/><Run Text="{Binding Origin}"/>
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <DataGridTemplateColumn Header="Memória" Width="130">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding MemoryMB, StringFormat={}{0:N0} MB}"
+                                                                       FontSize="13.5" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource AccentAltBrush}"/>
+                                                            <TextBlock Text="{Binding ProtectedNote}" FontSize="10"
+                                                                       Foreground="{DynamicResource Fg3Brush}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <DataGridTemplateColumn Header="Ações" Width="215">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <Button Content="Compactar" Style="{StaticResource ChipButton}" Margin="0,0,5,0"
+                                                                    ToolTip="Devolve memória sem fechar o aplicativo"
+                                                                    Command="{Binding DataContext.TrimProcessCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}"/>
+                                                            <Button Content="Encerrar" Padding="10,4" FontSize="11"
+                                                                    IsEnabled="{Binding CanClose}"
+                                                                    ToolTip="Fecha o aplicativo e devolve toda a memória"
+                                                                    Command="{Binding DataContext.CloseProcessCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button" BasedOn="{StaticResource DangerButton}">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding CanClose}" Value="False">
+                                                                                <Setter Property="Background" Value="{DynamicResource Bg2Brush}"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource Fg3Brush}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
                             <Border Style="{StaticResource CardBorder}">
                                 <StackPanel>
                                     <TextBlock Text="Como funciona — e quando ajuda de verdade"
@@ -753,7 +936,7 @@
                     <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg3Brush}"
                                FontSize="11.5" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                               Text="Curupira 2.0 · DataSec"/>
+                               Text="Curupira 2.1 · DataSec"/>
                 </Grid>
             </Border>
         </Grid>
@@ -777,7 +960,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Curupira" FontSize="16" FontWeight="Bold"
                                        Foreground="{DynamicResource Fg0Brush}"/>
-                            <TextBlock Text="versão 2.0" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                            <TextBlock Text="versão 2.1" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

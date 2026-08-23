@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -177,7 +179,147 @@ public sealed class MemoryService
         return AdjustTokenPrivileges(token, false, ref tp,
             Marshal.SizeOf<TOKEN_PRIVILEGES>(), IntPtr.Zero, IntPtr.Zero);
     }
+
+    // ================= PROCESSOS =================
+
+    /// <summary>Processos que NUNCA podem ser encerrados - matar qualquer um destes
+    /// derruba a sessao ou causa tela azul.</summary>
+    private static readonly HashSet<string> Protected = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "System", "Idle", "Registry", "smss", "csrss", "wininit", "winlogon",
+        "services", "lsass", "lsaiso", "fontdrvhost", "dwm", "Memory Compression",
+        "svchost", "explorer", "sihost", "ctfmon", "RuntimeBroker", "Curupira"
+    };
+
+    /// <summary>Top processos por memoria de trabalho.</summary>
+    public List<ProcessMemoryInfo> GetTopProcesses(int take = 25)
+    {
+        var list = new List<ProcessMemoryInfo>();
+        foreach (var p in Process.GetProcesses())
+        {
+            try
+            {
+                var name = p.ProcessName;
+                if (name is "Idle" or "System") continue;
+
+                double mb = p.WorkingSet64 / 1024.0 / 1024.0;
+                if (mb < 5) { p.Dispose(); continue; }
+
+                string title = "";
+                string company = "";
+                try { title = p.MainWindowTitle ?? ""; } catch { }
+                try { company = p.MainModule?.FileVersionInfo?.CompanyName ?? ""; } catch { }
+
+                list.Add(new ProcessMemoryInfo(
+                    Pid: p.Id,
+                    Name: name,
+                    WindowTitle: title,
+                    Company: company,
+                    MemoryMB: Math.Round(mb, 1),
+                    IsProtected: Protected.Contains(name),
+                    HasWindow: !string.IsNullOrWhiteSpace(title)));
+            }
+            catch { }
+            finally { try { p.Dispose(); } catch { } }
+        }
+
+        // Agrupa por nome somando instancias (Chrome/Brave abrem dezenas)
+        var grouped = list
+            .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var main = g.OrderByDescending(x => x.HasWindow).ThenByDescending(x => x.MemoryMB).First();
+                return main with
+                {
+                    MemoryMB = Math.Round(g.Sum(x => x.MemoryMB), 1),
+                    InstanceCount = g.Count()
+                };
+            })
+            .OrderByDescending(x => x.MemoryMB)
+            .Take(take)
+            .ToList();
+
+        _log.Debug("{Count} processos agrupados por memoria", grouped.Count);
+        return grouped;
+    }
+
+    /// <summary>Encerra todas as instancias de um processo pelo nome.</summary>
+    public ProcessActionResult CloseByName(string name, Action<string>? onLine)
+    {
+        if (Protected.Contains(name))
+        {
+            onLine?.Invoke($"[BLOQUEADO] {name} e um processo critico do sistema e nao pode ser encerrado.");
+            return new ProcessActionResult(false, 0, 0, "Processo protegido");
+        }
+
+        int closed = 0;
+        double freed = 0;
+        foreach (var p in Process.GetProcessesByName(name))
+        {
+            try
+            {
+                freed += p.WorkingSet64 / 1024.0 / 1024.0;
+                // Tenta fechar pela janela primeiro (permite salvar), depois forca
+                if (!p.CloseMainWindow() || !p.WaitForExit(2500))
+                    p.Kill(entireProcessTree: true);
+                closed++;
+            }
+            catch (Exception ex) { onLine?.Invoke($"  Falha em PID {p.Id}: {ex.Message}"); }
+            finally { try { p.Dispose(); } catch { } }
+        }
+
+        onLine?.Invoke(closed > 0
+            ? $"{name}: {closed} instancia(s) encerrada(s), ~{freed:N0} MB devolvidos"
+            : $"{name}: nenhuma instancia encerrada");
+        _log.Information("Encerrado {Name}: {Closed} instancias, {Freed} MB", name, closed, freed);
+        return new ProcessActionResult(closed > 0, closed, Math.Round(freed, 1), "");
+    }
+
+    /// <summary>Compacta o working set apenas de um processo, sem encerra-lo.</summary>
+    public ProcessActionResult TrimByName(string name, Action<string>? onLine)
+    {
+        int trimmed = 0;
+        double before = 0, after = 0;
+        foreach (var p in Process.GetProcessesByName(name))
+        {
+            try
+            {
+                before += p.WorkingSet64 / 1024.0 / 1024.0;
+                if (SetProcessWorkingSetSize(p.Handle, (IntPtr)(-1), (IntPtr)(-1))) trimmed++;
+                p.Refresh();
+                after += p.WorkingSet64 / 1024.0 / 1024.0;
+            }
+            catch { }
+            finally { try { p.Dispose(); } catch { } }
+        }
+        var freed = Math.Max(0, Math.Round(before - after, 1));
+        onLine?.Invoke($"{name}: working set compactado em {trimmed} instancia(s), ~{freed:N0} MB");
+        return new ProcessActionResult(trimmed > 0, trimmed, freed, "");
+    }
 }
+
+public sealed record ProcessMemoryInfo(
+    int Pid, string Name, string WindowTitle, string Company,
+    double MemoryMB, bool IsProtected, bool HasWindow)
+{
+    public int InstanceCount { get; init; } = 1;
+
+    public string Display => string.IsNullOrWhiteSpace(WindowTitle)
+        ? Name
+        : (WindowTitle.Length > 60 ? WindowTitle[..60] + "..." : WindowTitle);
+
+    public string Detail => InstanceCount > 1
+        ? $"{Name} · {InstanceCount} processos"
+        : $"{Name} · PID {Pid}";
+
+    public string Origin => string.IsNullOrWhiteSpace(Company) ? "origem desconhecida" : Company;
+
+    public bool CanClose => !IsProtected;
+
+    public string ProtectedNote => IsProtected ? "Componente do Windows" : "";
+}
+
+public sealed record ProcessActionResult(bool Success, int Count, double FreedMB, string Error);
 
 public sealed record MemorySnapshot(double TotalMB, double AvailableMB, int LoadPercent)
 {

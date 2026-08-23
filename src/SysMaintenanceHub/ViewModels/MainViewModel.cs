@@ -106,6 +106,193 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<ScanModuleReport> ScanReports { get; } = new();
     private readonly Dictionary<string, ScanModuleReport> _reports = new();
 
+    // ================= PAINEL PRINCIPAL =================
+
+    public ObservableCollection<DashboardItem> DashboardItems { get; } = new();
+
+    /// <summary>Top processos por consumo de memoria (agrupados por nome).</summary>
+    public ObservableCollection<ProcessMemoryInfo> TopProcesses { get; } = new();
+    [ObservableProperty] private double _topProcessesTotalMB;
+
+    [ObservableProperty] private int _healthScore = 100;
+    [ObservableProperty] private string _healthLabel = "Aguardando varredura";
+    [ObservableProperty] private string _healthColor = "#5F8271";
+    [ObservableProperty] private string _healthSummary = "Execute uma varredura para avaliar o sistema.";
+    [ObservableProperty] private int _areasNeedingAction;
+
+    /// <summary>
+    /// Monta os cards do painel a partir do resultado das varreduras e
+    /// calcula uma pontuação de saúde 0-100. Cada card explica o que a área
+    /// significa e o que muda na máquina ao resolver.
+    /// </summary>
+    private void BuildDashboard()
+    {
+        double score = 100;
+        var items = new List<DashboardItem>();
+
+        // ---------- 1. Vulnerabilidades ----------
+        var otherVulns = Math.Max(0, TotalVulnCount - CriticalVulnCount);
+        score -= Math.Min(35, CriticalVulnCount * 8);
+        score -= Math.Min(10, otherVulns * 1.0);
+        items.Add(new DashboardItem
+        {
+            Area = "Vulnerabilidades",
+            Icon = "⚠",
+            TargetSection = 1,
+            ActionLabel = "Corrigir agora",
+            Value = TotalVulnCount.ToString(),
+            ValueCaption = CriticalVulnCount > 0 ? $"{CriticalVulnCount} crítica(s)" : "nenhuma crítica",
+            WhatItIs = "Falhas conhecidas (CVEs publicadas pela Microsoft) e configurações inseguras do próprio Windows, como SMBv1 ligado, RDP sem NLA ou proteção do LSA desativada.",
+            WhatItImproves = "Fecha as portas de entrada mais usadas por ransomware e por roubo de credenciais. É o item de maior impacto real em segurança.",
+            Level = CriticalVulnCount > 0 ? HealthLevel.Critical
+                  : TotalVulnCount > 0 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = TotalVulnCount > 0
+        });
+
+        // ---------- 2. Windows Update ----------
+        score -= Math.Min(20, PendingSecurityUpdates * 5);
+        score -= Math.Min(8, Math.Max(0, PendingWindowsUpdates - PendingSecurityUpdates) * 2);
+        items.Add(new DashboardItem
+        {
+            Area = "Windows Update",
+            Icon = "⭳",
+            TargetSection = 2,
+            ActionLabel = "Instalar todas",
+            Value = PendingWindowsUpdates.ToString(),
+            ValueCaption = PendingSecurityUpdates > 0 ? $"{PendingSecurityUpdates} de segurança" : "nenhuma de segurança",
+            WhatItIs = "Pacotes de correção que a Microsoft publica toda segunda terça-feira do mês, além de atualizações de definição do Defender.",
+            WhatItImproves = "Aplica correções de falhas que já estão sendo exploradas na internet e resolve bugs de estabilidade e compatibilidade de driver.",
+            Level = PendingSecurityUpdates > 0 ? HealthLevel.Critical
+                  : PendingWindowsUpdates > 0 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = PendingWindowsUpdates > 0
+        });
+
+        // ---------- 3. Aplicativos ----------
+        score -= Math.Min(8, PendingApps * 0.5);
+        items.Add(new DashboardItem
+        {
+            Area = "Aplicativos",
+            Icon = "▣",
+            TargetSection = 8,
+            ActionLabel = "Atualizar tudo",
+            Value = PendingApps.ToString(),
+            ValueCaption = "com versão nova",
+            WhatItIs = "Programas instalados na máquina que têm versão mais recente disponível no repositório do winget.",
+            WhatItImproves = "Navegador, leitor de PDF e runtimes desatualizados são o vetor de invasão mais comum em máquinas domésticas. Atualizar fecha esse caminho.",
+            Level = PendingApps > 15 ? HealthLevel.Attention : PendingApps > 0 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = PendingApps > 0
+        });
+
+        // ---------- 4. Limpeza de disco ----------
+        double gb = TotalCleanableMB / 1024.0;
+        score -= gb > 10 ? 10 : gb > 5 ? 6 : gb > 2 ? 3 : 0;
+        items.Add(new DashboardItem
+        {
+            Area = "Limpeza de disco",
+            Icon = "✧",
+            TargetSection = 4,
+            ActionLabel = "Limpar agora",
+            Value = gb >= 1 ? $"{gb:N1} GB" : $"{TotalCleanableMB:N0} MB",
+            ValueCaption = "recuperáveis",
+            WhatItIs = "Arquivos temporários, caches de navegador e de ferramentas de desenvolvimento, resíduos do Windows Update e a lixeira.",
+            WhatItImproves = "O Windows precisa de espaço livre para arquivo de paginação, atualizações e cache. Com disco cheio o sistema fica visivelmente mais lento.",
+            Level = gb > 10 ? HealthLevel.Attention : gb > 2 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = gb > 0.5
+        });
+
+        // ---------- 5. Memória RAM ----------
+        score -= MemoryLoadPercent > 90 ? 10 : MemoryLoadPercent > 80 ? 6 : 0;
+        items.Add(new DashboardItem
+        {
+            Area = "Memória RAM",
+            Icon = "▤",
+            TargetSection = 5,
+            ActionLabel = "Liberar memória",
+            Value = $"{MemoryLoadPercent}%",
+            ValueCaption = MemoryStatusText,
+            WhatItIs = "Working set retido por processos que já não precisam dele, mais a standby list — cache de arquivos que o Windows guarda mas não é memória livre.",
+            WhatItImproves = "Devolve RAM utilizável para abrir aplicativos pesados sem que o Windows precise usar disco como memória, o que é ordens de grandeza mais lento.",
+            Level = MemoryLoadPercent > 90 ? HealthLevel.Critical
+                  : MemoryLoadPercent > 80 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = MemoryLoadPercent > 70
+        });
+
+        // ---------- 6. Inicialização ----------
+        var enabledStartup = StartupApps.Count(a => a.Enabled);
+        score -= enabledStartup > 20 ? 6 : enabledStartup > 12 ? 3 : 0;
+        items.Add(new DashboardItem
+        {
+            Area = "Inicialização",
+            Icon = "⏻",
+            TargetSection = 7,
+            ActionLabel = "Revisar lista",
+            Value = enabledStartup.ToString(),
+            ValueCaption = $"ativos de {StartupAppCount}",
+            WhatItIs = "Programas registrados para subir junto com o Windows, vindos das chaves Run do registro e da pasta de inicialização.",
+            WhatItImproves = "Cada programa adiciona segundos ao tempo de boot e continua consumindo memória e CPU o dia inteiro, mesmo sem você usar.",
+            Level = enabledStartup > 20 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = enabledStartup > 8
+        });
+
+        // ---------- 7. Discos ----------
+        var fragDrives = Drives.Count(d => d.FragmentationPercent > 10);
+        score -= fragDrives > 0 ? (fragDrives > 1 ? 6 : 3) : 0;
+        items.Add(new DashboardItem
+        {
+            Area = "Discos",
+            Icon = "⛁",
+            TargetSection = 6,
+            ActionLabel = "Otimizar",
+            Value = fragDrives.ToString(),
+            ValueCaption = fragDrives == 0 ? "todos otimizados" : "precisam otimizar",
+            WhatItIs = "Nível de fragmentação por unidade. Em HDD os arquivos ficam espalhados; em SSD o que importa é o TRIM manter os blocos livres marcados.",
+            WhatItImproves = "No HDD reduz o tempo de leitura porque a cabeça percorre menos. No SSD o TRIM preserva a velocidade de escrita ao longo do tempo.",
+            Level = fragDrives > 1 ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = fragDrives > 0
+        });
+
+        // ---------- 8. Catálogo Microsoft ----------
+        score -= CatalogHasPending ? 8 : 0;
+        items.Add(new DashboardItem
+        {
+            Area = "Build do Windows",
+            Icon = "◎",
+            TargetSection = 3,
+            ActionLabel = "Ver catálogo",
+            Value = CatalogHasPending ? "Desatualizada" : "Atual",
+            ValueCaption = string.IsNullOrWhiteSpace(LatestOfficialBuild) ? "—" : $"oficial: {LatestOfficialBuild}",
+            WhatItIs = "Comparação entre a build instalada nesta máquina e a última publicada no release-health oficial da Microsoft.",
+            WhatItImproves = "Confirma que você está de fato na versão mais recente. O Windows Update às vezes atrasa a entrega por semanas em algumas máquinas.",
+            Level = CatalogHasPending ? HealthLevel.Attention : HealthLevel.Ok,
+            NeedsAction = CatalogHasPending
+        });
+
+        var final = (int)Math.Round(Math.Max(0, Math.Min(100, score)));
+
+        RunOnUi(() =>
+        {
+            DashboardItems.Clear();
+            foreach (var i in items) DashboardItems.Add(i);
+
+            HealthScore = final;
+            AreasNeedingAction = items.Count(i => i.NeedsAction);
+
+            (HealthLabel, HealthColor) = final switch
+            {
+                >= 90 => ("Excelente", "#4ADE80"),
+                >= 75 => ("Bom", "#34D399"),
+                >= 55 => ("Requer atenção", "#FBBF24"),
+                _     => ("Crítico", "#EF4444")
+            };
+
+            HealthSummary = AreasNeedingAction == 0
+                ? "Nenhuma ação pendente. O sistema está em dia."
+                : CriticalVulnCount > 0
+                    ? $"{CriticalVulnCount} vulnerabilidade(s) crítica(s) exigem correção imediata. {AreasNeedingAction} área(s) no total precisam de atenção."
+                    : $"{AreasNeedingAction} área(s) podem ser melhoradas. Nenhuma falha crítica detectada.";
+        });
+    }
+
     private ScanModuleReport GetReport(string name, string actionHint = "")
     {
         if (_reports.TryGetValue(name, out var r)) return r;
@@ -214,6 +401,8 @@ public partial class MainViewModel : ObservableObject
             RefreshMemorySnapshot();
             await Task.WhenAll(tasks);
             RefreshMemorySnapshot();
+            RefreshProcesses();
+            BuildDashboard();
 
             SetProgress(100, "Refresh concluído.");
             AppendLog("== Refresh finalizado ==");
@@ -424,6 +613,7 @@ public partial class MainViewModel : ObservableObject
             SetProgress(0, "Consultando catálogo oficial da Microsoft...");
             await ScanMicrosoftCatalogAsync(_cts.Token);
             StatusText = CatalogStatus;
+            BuildDashboard();
         }
         catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
         finally { IsIndeterminate = false; IsBusy = false; }
@@ -439,6 +629,7 @@ public partial class MainViewModel : ObservableObject
             IsBusy = true; IsIndeterminate = true;
             SetProgress(0, "Varrendo MSRC — últimos 3 meses...");
             await ScanVulnerabilitiesAsync(3, _cts.Token);
+            BuildDashboard();
             StatusText = VulnScanStatus;
         }
         catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
@@ -642,6 +833,7 @@ public partial class MainViewModel : ObservableObject
             AppendLog("== Liberacao de RAM iniciada ==");
 
             var result = await _memory.CleanAsync(AppendLog, _cts.Token);
+            RefreshProcesses();
 
             RunOnUi(() =>
             {
@@ -652,6 +844,7 @@ public partial class MainViewModel : ObservableObject
                 MemoryStatusText = $"{result.After.AvailableMB / 1024.0:N1} GB livres de {result.After.TotalMB / 1024.0:N1} GB";
                 StatusText = $"RAM: {result.FreedMB:N0} MB liberados";
             });
+            BuildDashboard();
 
             ReportDone(mod, (int)result.FreedMB,
                 result.FreedMB > 0
@@ -670,6 +863,77 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void RefreshMemory() => RefreshMemorySnapshot();
+
+    // ================= PROCESSOS NA MEMORIA =================
+
+    [RelayCommand]
+    private void RefreshProcesses()
+    {
+        var list = _memory.GetTopProcesses(25);
+        RunOnUi(() =>
+        {
+            TopProcesses.Clear();
+            foreach (var p in list) TopProcesses.Add(p);
+            TopProcessesTotalMB = Math.Round(list.Sum(p => p.MemoryMB), 1);
+        });
+    }
+
+    /// <summary>Encerra todas as instancias do aplicativo escolhido.</summary>
+    [RelayCommand]
+    private async Task CloseProcessAsync(ProcessMemoryInfo? proc)
+    {
+        if (proc is null || IsBusy) return;
+
+        if (proc.IsProtected)
+        {
+            AppendLog($"[BLOQUEADO] {proc.Name} e componente do Windows e nao pode ser encerrado.");
+            StatusText = $"{proc.Name} e protegido pelo sistema.";
+            return;
+        }
+
+        var aviso = proc.HasWindow
+            ? $"Encerrar {proc.Name}?\n\n{proc.Display}\n\nO aplicativo sera fechado. Trabalho nao salvo pode ser perdido."
+            : $"Encerrar {proc.Name}?\n\n{proc.InstanceCount} processo(s) usando {proc.MemoryMB:N0} MB.";
+
+        var r = MessageBox.Show(aviso, "Curupira - Encerrar aplicativo",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (r != MessageBoxResult.Yes) return;
+
+        try
+        {
+            IsBusy = true;
+            AppendLog($"Encerrando {proc.Name}...");
+            var result = await Task.Run(() => _memory.CloseByName(proc.Name, AppendLog));
+            StatusText = result.Success
+                ? $"{proc.Name} encerrado - {result.FreedMB:N0} MB devolvidos"
+                : $"Nao foi possivel encerrar {proc.Name}";
+            await Task.Delay(600);
+            RefreshProcesses();
+            RefreshMemorySnapshot();
+            RefreshProcesses();
+            BuildDashboard();
+        }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>Compacta a memoria do app sem fecha-lo.</summary>
+    [RelayCommand]
+    private async Task TrimProcessAsync(ProcessMemoryInfo? proc)
+    {
+        if (proc is null || IsBusy) return;
+        try
+        {
+            IsBusy = true;
+            var result = await Task.Run(() => _memory.TrimByName(proc.Name, AppendLog));
+            StatusText = $"{proc.Name}: {result.FreedMB:N0} MB compactados";
+            await Task.Delay(400);
+            RefreshProcesses();
+            RefreshMemorySnapshot();
+        }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsBusy = false; }
+    }
 
     [RelayCommand]
     private void Navigate(string? index)

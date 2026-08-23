@@ -96,3 +96,57 @@ public sealed class CountToVisibilityConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotImplementedException();
 }
+
+/// <summary>
+/// Converte uma pontuacao 0-100 em um arco de circulo (PathGeometry).
+/// ConverterParameter: "cx,cy,raio" — ex.: "70,70,60".
+/// </summary>
+public sealed class ScoreToArcConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double score = 0;
+        try { score = System.Convert.ToDouble(value, CultureInfo.InvariantCulture); } catch { }
+        score = Math.Max(0, Math.Min(100, score));
+
+        double cx = 70, cy = 70, r = 60;
+        var parts = parameter?.ToString()?.Split(',');
+        if (parts is { Length: 3 })
+        {
+            double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out cx);
+            double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out cy);
+            double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out r);
+        }
+
+        double sweep = score / 100.0 * 360.0;
+        if (sweep <= 0.01) sweep = 0.01;
+        if (sweep >= 359.99) sweep = 359.99;
+
+        const double startAngle = -90; // comeca no topo
+        var start = OnCircle(cx, cy, r, startAngle);
+        var end   = OnCircle(cx, cy, r, startAngle + sweep);
+
+        var figure = new System.Windows.Media.PathFigure { StartPoint = start, IsClosed = false };
+        figure.Segments.Add(new System.Windows.Media.ArcSegment(
+            end,
+            new System.Windows.Size(r, r),
+            0,
+            sweep > 180,
+            System.Windows.Media.SweepDirection.Clockwise,
+            true));
+
+        var geo = new System.Windows.Media.PathGeometry();
+        geo.Figures.Add(figure);
+        geo.Freeze();
+        return geo;
+    }
+
+    private static System.Windows.Point OnCircle(double cx, double cy, double r, double angleDeg)
+    {
+        double rad = angleDeg * Math.PI / 180.0;
+        return new System.Windows.Point(cx + r * Math.Cos(rad), cy + r * Math.Sin(rad));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotImplementedException();
+}
