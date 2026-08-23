@@ -1224,7 +1224,7 @@
                     <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg3Brush}"
                                FontSize="11.5" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                               Text="Curupira 2.3 · DataSec"/>
+                               Text="Curupira 2.3 · CyberThrust"/>
                 </Grid>
             </Border>
         </Grid>

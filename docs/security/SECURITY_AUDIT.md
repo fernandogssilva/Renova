@@ -2,7 +2,7 @@
 
 **Escopo:** binário WPF .NET 8 rodando como Administrador, com integração PowerShell, consultas HTTP externas e escrita em Registry.
 
-**Data:** 18/07/2026 · **Auditor:** análise interna DataSec
+**Data:** 18/07/2026 · **Auditor:** análise interna CyberThrust
 
 ---
 
@@ -101,4 +101,4 @@ Usuários que baixam da GitHub Release não têm como validar integridade além 
 
 ---
 
-**Assinatura da auditoria:** DataSec — 2026-07-18
+**Assinatura da auditoria:** CyberThrust — 2026-07-18

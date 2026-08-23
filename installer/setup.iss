@@ -7,8 +7,8 @@
 #define AppName           "Curupira"
 #define AppExeName        "Curupira.exe"
 #define AppVersion        "2.0.0"
-#define AppPublisher      "DataSec"
-#define AppURL            "https://datasec.com.br/"
+#define AppPublisher      "CyberThrust"
+#define AppURL            "https://cyberthrust.io/"
 #define AppId             "{{A2E1D6C8-9B4E-4F91-9F0E-7A55D0F1B3C4}"
 
 [Setup]

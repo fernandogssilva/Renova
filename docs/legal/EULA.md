@@ -2,7 +2,7 @@
 ## Curupira
 
 **Última atualização:** 18 de julho de 2026
-**Licenciante:** DataSec — Fernando Silva
+**Licenciante:** CyberThrust — Fernando Silva
 **Contato:** fernandogssilva@gmail.com
 
 Ao instalar, copiar, baixar, acessar ou de outra forma utilizar o Curupira ("**Software**"), você ("**Usuário**") concorda em ficar vinculado pelos termos deste Contrato de Licença de Usuário Final ("**EULA**"). Se você não concordar com os termos, **não instale, não execute e desinstale o Software imediatamente**.
@@ -163,4 +163,4 @@ MESMO QUE O LICENCIANTE TENHA SIDO AVISADO DA POSSIBILIDADE DE TAIS DANOS.
 
 **Ao clicar em "Aceito" durante a instalação, ou ao executar o Software, o Usuário declara ter lido, compreendido e concordado com todos os termos deste EULA.**
 
-© 2026 Fernando Silva / DataSec — Todos os direitos reservados.
+© 2026 Fernando Silva / CyberThrust — Todos os direitos reservados.

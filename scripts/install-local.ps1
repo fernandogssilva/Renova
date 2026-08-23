@@ -50,7 +50,7 @@ $regBase = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Curupira'
 if (-not (Test-Path $regBase)) { New-Item -Path $regBase -Force | Out-Null }
 Set-ItemProperty $regBase 'DisplayName'     'Curupira'
 Set-ItemProperty $regBase 'DisplayVersion'  '2.0.0'
-Set-ItemProperty $regBase 'Publisher'       'DataSec'
+Set-ItemProperty $regBase 'Publisher'       'CyberThrust'
 Set-ItemProperty $regBase 'InstallLocation' $InstallDir
 Set-ItemProperty $regBase 'UninstallString' "powershell.exe -ExecutionPolicy Bypass -File `"$InstallDir\uninstall.ps1`""
 Set-ItemProperty $regBase 'NoModify'        1

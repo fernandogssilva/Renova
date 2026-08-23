@@ -1,7 +1,7 @@
 # Go-to-Market — Curupira
 
 **Data:** julho/2026
-**Autor:** DataSec — Fernando Silva
+**Autor:** CyberThrust — Fernando Silva
 **Status:** rascunho v0.1
 
 ---
@@ -73,7 +73,7 @@ Topo (awareness)
 ├── LinkedIn (posts semanais: bug/vulnerabilidade recente + como o SMH resolve)
 ├── YouTube Shorts (60s por feature: "Winget update em 1 clique")
 ├── Reddit r/brdev e r/Windows_BR (posts pontuais e não-spam)
-├── Blog DataSec (SEO: "como atualizar Windows 11 sem CCleaner")
+├── Blog CyberThrust (SEO: "como atualizar Windows 11 sem CCleaner")
 └── Comparativos "Curupira vs CCleaner"
 
 Meio (consideração)
@@ -120,7 +120,7 @@ Pós-venda
 | 3 | Setup Kiwify + integração com envio automático de chave |
 | 4 | Beta fechado com 10 amigos técnicos (feedback + depoimentos) |
 | 5 | Ajustes com base no beta |
-| 6 | **Lançamento oficial** — post LinkedIn + Reddit + newsletter DataSec |
+| 6 | **Lançamento oficial** — post LinkedIn + Reddit + newsletter CyberThrust |
 | 7-8 | Reels/Shorts semanais + AMA no Reddit |
 | 9 | Primeira newsletter para base (nova KB crítica) |
 | 10 | Otimização do funil (A/B na LP, botão CTA) |
@@ -150,10 +150,10 @@ Pós-venda
 
 ## 8. Próximas 3 Ações Concretas
 
-1. **Registrar o domínio** `sysmaintenancehub.com.br` ou `datasec.app.br`
+1. **Registrar o domínio** `curupira.app.br` ou `curupira.cyberthrust.io`
 2. Escrever a **copy da LP** (headline, subheadline, 3 seções de features, FAQ, CTA)
 3. Implementar o **sistema de chaves** (ver `docs/strategy/LICENSE_SYSTEM.md` — a criar)
 
 ---
 
-© 2026 DataSec — documento interno / não distribuir
+© 2026 CyberThrust — documento interno / não distribuir
