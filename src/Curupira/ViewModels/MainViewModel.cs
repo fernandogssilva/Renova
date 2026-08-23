@@ -25,6 +25,7 @@ public partial class MainViewModel : ObservableObject
     private readonly MemoryService _memory;
     private readonly Winapp2Service _winapp2;
     private readonly RegistryAuditService _registry;
+    private readonly ReportService _report;
     private readonly PrerequisiteService _prereq;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
@@ -44,6 +45,7 @@ public partial class MainViewModel : ObservableObject
         _memory = new MemoryService();
         _winapp2 = new Winapp2Service();
         _registry = new RegistryAuditService();
+        _report = new ReportService(ps);
         _prereq = new PrerequisiteService(ps);
         Winapp2DatabaseStatus = _winapp2.DatabaseExists
             ? $"Base carregada ({_winapp2.DatabaseDate:dd/MM/yyyy})"
@@ -135,6 +137,59 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _registrySelectedCount;
     [ObservableProperty] private string _registryStatus = "Nenhuma análise executada";
     [ObservableProperty] private string _lastRegistryBackup = "";
+
+    // ================= REPORT DE FALHA =================
+    public ObservableCollection<ReportAttachment> ReportAttachments { get; } = new();
+
+    [ObservableProperty] private string _reportTitle = "";
+    [ObservableProperty] private string _reportDescription = "";
+    [ObservableProperty] private string _reportSteps = "";
+    [ObservableProperty] private string _reportModule = "Nao sei dizer";
+    [ObservableProperty] private string _reportSeverity = "Media";
+    [ObservableProperty] private bool _reportReproducible;
+    [ObservableProperty] private string _reportStatus = "";
+    [ObservableProperty] private string _lastReportPath = "";
+
+    public List<string> ReportModules { get; } = new()
+    {
+        "Nao sei dizer", "Painel", "Vulnerabilidades", "Windows Update",
+        "Catalogo Microsoft", "Limpeza de disco", "Regras da comunidade",
+        "Registro do Windows", "Memoria RAM", "Discos", "Inicializacao",
+        "Aplicativos", "Pre-requisitos", "Instalacao / atualizacao"
+    };
+
+    public List<string> ReportSeverities { get; } = new()
+    { "Baixa", "Media", "Alta", "Critica - trava o app" };
+
+    /// <summary>
+    /// O envio so libera com imagem anexada. Report de falha sem evidencia
+    /// visual gera ida e volta e raramente vira correcao.
+    /// </summary>
+    public bool CanSubmitReport =>
+        ReportAttachments.Count > 0 &&
+        !string.IsNullOrWhiteSpace(ReportDescription) &&
+        ReportDescription.Trim().Length >= 20;
+
+    public string ReportBlockReason
+    {
+        get
+        {
+            if (ReportAttachments.Count == 0)
+                return "Anexe ao menos uma imagem mostrando o problema.";
+            if (string.IsNullOrWhiteSpace(ReportDescription) || ReportDescription.Trim().Length < 20)
+                return "Descreva o problema com pelo menos 20 caracteres.";
+            return "";
+        }
+    }
+
+    private void RefreshReportValidation()
+    {
+        OnPropertyChanged(nameof(CanSubmitReport));
+        OnPropertyChanged(nameof(ReportBlockReason));
+        SubmitReportCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnReportDescriptionChanged(string value) => RefreshReportValidation();
 
     // ================= PRE-REQUISITOS =================
     public ObservableCollection<Prerequisite> Prerequisites { get; } = new();
@@ -1230,6 +1285,157 @@ public partial class MainViewModel : ObservableObject
         catch (OperationCanceledException) { StatusText = "Cancelado."; }
         catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
         finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    // ================= REPORT DE FALHA =================
+
+    [RelayCommand]
+    private void AddReportImages()
+    {
+        var paths = ReportService.PickImages();
+        foreach (var path in paths) AttachImage(path);
+    }
+
+    [RelayCommand]
+    private void PasteReportImage()
+    {
+        var path = _report.SaveClipboardImage();
+        if (path is null)
+        {
+            ReportStatus = "Nao ha imagem na area de transferencia. Use Win+Shift+S para recortar a tela e tente de novo.";
+            return;
+        }
+        AttachImage(path);
+        ReportStatus = "Imagem colada da area de transferencia.";
+    }
+
+    private void AttachImage(string path)
+    {
+        try
+        {
+            if (!System.IO.File.Exists(path)) return;
+            if (!ReportService.IsImage(path))
+            {
+                ReportStatus = $"{System.IO.Path.GetFileName(path)} nao e uma imagem.";
+                return;
+            }
+            if (ReportAttachments.Any(a => string.Equals(a.Path, path, StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            var info = new System.IO.FileInfo(path);
+
+            // Miniatura decodificada em largura reduzida e congelada, para a
+            // lista nao segurar o arquivo nem carregar a imagem inteira.
+            System.Windows.Media.ImageSource? thumb = null;
+            try
+            {
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.DecodePixelWidth = 220;
+                bmp.UriSource = new Uri(path);
+                bmp.EndInit();
+                bmp.Freeze();
+                thumb = bmp;
+            }
+            catch { }
+
+            ReportAttachments.Add(new ReportAttachment
+            {
+                Path = path,
+                SizeKB = Math.Round(info.Length / 1024.0, 0),
+                Thumbnail = thumb
+            });
+            ReportStatus = $"{ReportAttachments.Count} imagem(ns) anexada(s).";
+            RefreshReportValidation();
+        }
+        catch (Exception ex)
+        {
+            ReportStatus = $"Falha ao anexar: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveReportImage(ReportAttachment? att)
+    {
+        if (att is null) return;
+        ReportAttachments.Remove(att);
+        ReportStatus = ReportAttachments.Count == 0
+            ? "Nenhuma imagem anexada."
+            : $"{ReportAttachments.Count} imagem(ns) anexada(s).";
+        RefreshReportValidation();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSubmitReport))]
+    private async Task SubmitReportAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, "Montando pacote de report...");
+            AppendLog("== Gerando report de falha ==");
+
+            var input = new ReportInput
+            {
+                Title = string.IsNullOrWhiteSpace(ReportTitle) ? "(sem titulo)" : ReportTitle,
+                Description = ReportDescription,
+                StepsToReproduce = ReportSteps,
+                Module = ReportModule,
+                Severity = ReportSeverity,
+                Reproducible = ReportReproducible,
+                Attachments = ReportAttachments.ToList()
+            };
+
+            var result = await _report.BuildAsync(input, AppendLog, _cts.Token);
+
+            if (!result.Success)
+            {
+                ReportStatus = result.Error;
+                StatusText = result.Error;
+                return;
+            }
+
+            LastReportPath = string.IsNullOrEmpty(result.ZipPath) ? result.Folder : result.ZipPath;
+            ReportStatus = "Report gerado. Nada foi enviado — o arquivo esta no seu disco e voce decide se compartilha.";
+            StatusText = "Report de falha gerado.";
+            AppendLog($"Report em: {LastReportPath}");
+            _report.OpenFolder(result.Folder);
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex)
+        {
+            ReportStatus = $"Falha ao gerar o report: {ex.Message}";
+            AppendLog($"ERRO: {ex.Message}");
+        }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private void ClearReport()
+    {
+        ReportTitle = "";
+        ReportDescription = "";
+        ReportSteps = "";
+        ReportModule = "Nao sei dizer";
+        ReportSeverity = "Media";
+        ReportReproducible = false;
+        ReportAttachments.Clear();
+        LastReportPath = "";
+        ReportStatus = "Formulario limpo.";
+        RefreshReportValidation();
+    }
+
+    [RelayCommand]
+    private void OpenReportsFolder()
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(_report.ReportsDirectory);
+            _report.OpenFolder(_report.ReportsDirectory);
+        }
+        catch (Exception ex) { AppendLog($"Nao foi possivel abrir a pasta: {ex.Message}"); }
     }
 
     [RelayCommand]
