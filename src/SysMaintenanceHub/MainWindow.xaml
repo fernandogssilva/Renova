@@ -895,6 +895,219 @@
                     </Grid>
                 </TabItem>
 
+                <!-- 11 · REGRAS DA COMUNIDADE (winapp2) -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Regras da comunidade" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Style="{StaticResource SectionSubtitle}"
+                                       Text="Base winapp2.ini — milhares de regras de limpeza mantidas pela comunidade há mais de 15 anos, cobrindo aplicativos que nenhum limpador genérico conhece. O CCleaner abandonou esse formato na versão 7."/>
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Padding="12" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Button Content="Todas" Style="{StaticResource ChipButton}"
+                                            Command="{Binding SelectAllWinapp2Command}" Margin="0,0,6,0"/>
+                                    <Button Content="Limpar seleção" Style="{StaticResource ChipButton}"
+                                            Command="{Binding ClearWinapp2SelectionCommand}"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
+                                           FontSize="12.5" Foreground="{DynamicResource Fg2Brush}">
+                                    <Run Text="{Binding Winapp2SelectedCount}" FontWeight="Bold"/>
+                                    <Run Text="selecionados ·"/>
+                                    <Run Text="{Binding Winapp2TotalMB, StringFormat={}{0:N1} MB}" FontWeight="Bold"
+                                         Foreground="{DynamicResource AccentBrush}"/>
+                                    <Run Text="no total ·"/>
+                                    <Run Text="{Binding Winapp2DatabaseStatus}"/>
+                                </TextBlock>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Button Content="Baixar / atualizar base" Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding DownloadWinapp2Command}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                                    <Button Content="Analisar" Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding ScanWinapp2Command}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                                    <Button Content="Limpar selecionados" Style="{StaticResource FireButton}"
+                                            Command="{Binding CleanWinapp2Command}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Grid.Row="2" Text="{Binding Winapp2Status}" Margin="2,0,0,8"
+                                   FontSize="11.5" Foreground="{DynamicResource Fg3Brush}"/>
+
+                        <DataGrid Grid.Row="3" ItemsSource="{Binding Winapp2Results}"
+                                  Style="{StaticResource DataGridBase}" IsReadOnly="False">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="42" CanUserSort="False">
+                                    <DataGridTemplateColumn.Header><TextBlock Text="✓" FontSize="12"/></DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Alvo" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Categoria" Binding="{Binding Category}" Width="170" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Arquivos" Binding="{Binding FileCount, StringFormat={}{0:N0}}" Width="90" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110" IsReadOnly="True"/>
+                                <DataGridTemplateColumn Header="Aviso" Width="70" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="⚠" FontSize="14" HorizontalAlignment="Center"
+                                                       ToolTip="{Binding Warning}"
+                                                       Foreground="{DynamicResource WarningBrush}"
+                                                       Visibility="{Binding HasWarning, Converter={StaticResource B2V}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- 12 · REGISTRO -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Registro do Windows" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Style="{StaticResource SectionSubtitle}"
+                                       Text="Entradas órfãs deixadas por programas desinstalados. Todo backup é feito antes de qualquer remoção."/>
+                        </StackPanel>
+
+                        <!-- Aviso honesto -->
+                        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,0,0,10"
+                                BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Leia antes de usar" Style="{StaticResource CardTitle}"
+                                           Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,6"/>
+                                <TextBlock FontSize="12.5" LineHeight="19" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource Fg2Brush}">
+                                    <Run Text="Limpar registro NÃO acelera o Windows." FontWeight="Bold"/>
+                                    <Run Text="O registro tem milhões de chaves e fica indexado em memória — remover algumas centenas não muda tempo de boot nem uso de RAM. Quem promete ganho de desempenho aqui está vendendo ilusão."/>
+                                    <LineBreak/><LineBreak/>
+                                    <Run Text="O ganho real é de higiene e, num caso específico, de segurança:"/>
+                                    <Run Text="regras de firewall apontando para programas que já não existem" FontWeight="SemiBold"
+                                         Foreground="{DynamicResource DangerBrush}"/>
+                                    <Run Text="— se outro programa for instalado naquele mesmo caminho, ele herda a permissão de rede sem passar por você."/>
+                                    <LineBreak/><LineBreak/>
+                                    <Run Text="Por segurança, o Curupira não varre CLSID em massa, fontes nem Shared DLLs — é exatamente onde os otimizadores de mercado quebram instalações."/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="2" Style="{StaticResource CardBorder}" Padding="12" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Button Content="Todas" Style="{StaticResource ChipButton}"
+                                            Command="{Binding SelectAllRegistryCommand}" Margin="0,0,6,0"/>
+                                    <Button Content="Só o que importa" Style="{StaticResource ChipButton}"
+                                            ToolTip="Segurança e desperdício real, ignorando resíduo cosmético"
+                                            Command="{Binding SelectSecurityRegistryCommand}" Margin="0,0,6,0"/>
+                                    <Button Content="Limpar seleção" Style="{StaticResource ChipButton}"
+                                            Command="{Binding ClearRegistrySelectionCommand}"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
+                                           FontSize="12.5" Foreground="{DynamicResource Fg2Brush}">
+                                    <Run Text="{Binding RegistrySelectedCount}" FontWeight="Bold"/>
+                                    <Run Text="selecionada(s) ·"/>
+                                    <Run Text="{Binding RegistryStatus}"/>
+                                </TextBlock>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Button Content="Backups" Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding OpenRegistryBackupsCommand}" Margin="0,0,8,0"/>
+                                    <Button Content="Analisar" Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding ScanRegistryCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                                    <Button Content="Remover selecionadas" Style="{StaticResource FireButton}"
+                                            Command="{Binding CleanRegistryCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Grid.Row="3" Margin="2,0,0,8" FontSize="11.5"
+                                   Foreground="{DynamicResource SuccessBrush}" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding LastRegistryBackup, Converter={StaticResource B2V}}">
+                            <Run Text="Último backup:"/><Run Text="{Binding LastRegistryBackup}"/>
+                        </TextBlock>
+
+                        <DataGrid Grid.Row="4" ItemsSource="{Binding RegistryFindings}"
+                                  Style="{StaticResource DataGridBase}" IsReadOnly="False" RowHeight="52">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="42" CanUserSort="False">
+                                    <DataGridTemplateColumn.Header><TextBlock Text="✓" FontSize="12"/></DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Tipo" Width="105" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="7,3" HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding SeverityColor, Converter={StaticResource Hex2B}}">
+                                                <TextBlock Text="{Binding SeverityText}" Foreground="White"
+                                                           FontSize="10.5" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="O que foi encontrado" Width="*" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Detail}" FontSize="12.5" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource Fg0Brush}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Why}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource Fg3Brush}" ToolTip="{Binding Why}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="Chave" Binding="{Binding KeyPath}" Width="330" IsReadOnly="True"
+                                                    FontSize="10.5"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
                 <!-- 10 · LOGS -->
                 <TabItem>
                     <Grid>
@@ -936,7 +1149,7 @@
                     <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg3Brush}"
                                FontSize="11.5" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                               Text="Curupira 2.1 · DataSec"/>
+                               Text="Curupira 2.2 · DataSec"/>
                 </Grid>
             </Border>
         </Grid>
@@ -960,7 +1173,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Curupira" FontSize="16" FontWeight="Bold"
                                        Foreground="{DynamicResource Fg0Brush}"/>
-                            <TextBlock Text="versão 2.1" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                            <TextBlock Text="versão 2.2" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -978,9 +1191,15 @@
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="◎" Content="Catálogo Microsoft"
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=3, Mode=TwoWay}"/>
 
-                        <TextBlock Text="DESEMPENHO" Style="{StaticResource NavGroupHeader}"/>
+                        <TextBlock Text="LIMPEZA" Style="{StaticResource NavGroupHeader}"/>
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="✧" Content="Limpeza de disco"
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=4, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⛃" Content="Regras da comunidade"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=10, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⚿" Content="Registro do Windows"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=11, Mode=TwoWay}"/>
+
+                        <TextBlock Text="DESEMPENHO" Style="{StaticResource NavGroupHeader}"/>
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="▤" Content="Memória RAM"
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=5, Mode=TwoWay}"/>
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⛁" Content="Discos"
@@ -994,7 +1213,7 @@
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="◐" Content="Varredura ao vivo"
                                      IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=9, Mode=TwoWay}"/>
                         <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="☰" Content="Logs"
-                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=10, Mode=TwoWay}"/>
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=12, Mode=TwoWay}"/>
                     </StackPanel>
                 </ScrollViewer>
 

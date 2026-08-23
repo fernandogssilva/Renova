@@ -23,6 +23,8 @@ public partial class MainViewModel : ObservableObject
     private readonly VulnerabilityService _vuln;
     private readonly LocalSecurityAuditService _localAudit;
     private readonly MemoryService _memory;
+    private readonly Winapp2Service _winapp2;
+    private readonly RegistryAuditService _registry;
     private readonly ILogger _log = Log.ForContext<MainViewModel>();
 
     private CancellationTokenSource? _cts;
@@ -39,6 +41,11 @@ public partial class MainViewModel : ObservableObject
         _vuln = new VulnerabilityService(_catalog);
         _localAudit = new LocalSecurityAuditService(ps);
         _memory = new MemoryService();
+        _winapp2 = new Winapp2Service();
+        _registry = new RegistryAuditService();
+        Winapp2DatabaseStatus = _winapp2.DatabaseExists
+            ? $"Base carregada ({_winapp2.DatabaseDate:dd/MM/yyyy})"
+            : "Base ainda nao baixada";
 
         AppTheme = ThemeManager.Current == Services.AppTheme.Dark ? "Dark" : "Light";
         LastCleanupText = FormatLastCleanup(_cleanup.LastCleanup());
@@ -113,6 +120,19 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Top processos por consumo de memoria (agrupados por nome).</summary>
     public ObservableCollection<ProcessMemoryInfo> TopProcesses { get; } = new();
     [ObservableProperty] private double _topProcessesTotalMB;
+
+    // ================= WINAPP2 (regras da comunidade) =================
+    public ObservableCollection<Winapp2Result> Winapp2Results { get; } = new();
+    [ObservableProperty] private string _winapp2DatabaseStatus = "Base ainda nao baixada";
+    [ObservableProperty] private double _winapp2TotalMB;
+    [ObservableProperty] private int _winapp2SelectedCount;
+    [ObservableProperty] private string _winapp2Status = "Nenhuma varredura executada";
+
+    // ================= REGISTRO =================
+    public ObservableCollection<RegistryFinding> RegistryFindings { get; } = new();
+    [ObservableProperty] private int _registrySelectedCount;
+    [ObservableProperty] private string _registryStatus = "Nenhuma analise executada";
+    [ObservableProperty] private string _lastRegistryBackup = "";
 
     [ObservableProperty] private int _healthScore = 100;
     [ObservableProperty] private string _healthLabel = "Aguardando varredura";
@@ -933,6 +953,199 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
         finally { IsBusy = false; }
+    }
+
+    // ================= WINAPP2 =================
+
+    [RelayCommand]
+    private async Task DownloadWinapp2Async()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, "Baixando base de regras da comunidade...");
+            var ok = await _winapp2.DownloadDatabaseAsync(AppendLog, _cts.Token);
+            Winapp2DatabaseStatus = ok
+                ? $"Base carregada ({_winapp2.DatabaseDate:dd/MM/yyyy})"
+                : "Falha ao baixar a base";
+            if (ok) await ScanWinapp2Async();
+        }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task ScanWinapp2Async()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        const string mod = "Regras da comunidade (winapp2)";
+        try
+        {
+            IsBusy = true; IsIndeterminate = false;
+            ReportStart(mod, "Detectando aplicativos instalados e medindo espaco...");
+            var prog = new Progress<int>(v => RunOnUi(() => Progress = v));
+            var results = await _winapp2.ScanAsync(AppendLog, prog, _cts.Token);
+
+            RunOnUi(() =>
+            {
+                foreach (var old in Winapp2Results) old.PropertyChanged -= OnWinapp2Changed;
+                Winapp2Results.Clear();
+                foreach (var r in results) { r.PropertyChanged += OnWinapp2Changed; Winapp2Results.Add(r); }
+                Winapp2TotalMB = Math.Round(results.Sum(r => r.SizeMB), 1);
+                Winapp2SelectedCount = results.Count(r => r.IsSelected);
+                Winapp2Status = results.Count == 0
+                    ? "Nenhum residuo encontrado pelas regras da comunidade."
+                    : $"{results.Count} alvos - {Winapp2TotalMB:N1} MB recuperaveis";
+            });
+            ReportDone(mod, results.Count, $"{Winapp2TotalMB:N1} MB recuperaveis por regras da comunidade");
+            SetProgress(100, Winapp2Status);
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsBusy = false; }
+    }
+
+    private void OnWinapp2Changed(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Winapp2Result.IsSelected))
+            RunOnUi(() => Winapp2SelectedCount = Winapp2Results.Count(r => r.IsSelected));
+    }
+
+    [RelayCommand]
+    private void SelectAllWinapp2()
+    { foreach (var r in Winapp2Results) r.IsSelected = true; Winapp2SelectedCount = Winapp2Results.Count; }
+
+    [RelayCommand]
+    private void ClearWinapp2Selection()
+    { foreach (var r in Winapp2Results) r.IsSelected = false; Winapp2SelectedCount = 0; }
+
+    [RelayCommand]
+    private async Task CleanWinapp2Async()
+    {
+        if (IsBusy) return;
+        var sel = Winapp2Results.Where(r => r.IsSelected).ToList();
+        if (sel.Count == 0) { StatusText = "Selecione ao menos um alvo."; return; }
+
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = false;
+            SetProgress(0, $"Limpando {sel.Count} alvo(s)...");
+            var prog = new Progress<int>(v => RunOnUi(() => Progress = v));
+            var summary = await _winapp2.CleanAsync(sel, AppendLog, prog, _cts.Token);
+            StatusText = $"{summary.FreedMB:N1} MB liberados - {summary.FilesDeleted} arquivos removidos";
+            await ScanWinapp2Async();
+            BuildDashboard();
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsBusy = false; }
+    }
+
+    // ================= REGISTRO =================
+
+    [RelayCommand]
+    private async Task ScanRegistryAsync()
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        const string mod = "Registro do Windows";
+        try
+        {
+            IsBusy = true; IsIndeterminate = false;
+            ReportStart(mod, "Analisando categorias seguras...");
+            var prog = new Progress<int>(v => RunOnUi(() => Progress = v));
+            var findings = await _registry.ScanAsync(AppendLog, prog, _cts.Token);
+
+            RunOnUi(() =>
+            {
+                foreach (var old in RegistryFindings) old.PropertyChanged -= OnRegistryChanged;
+                RegistryFindings.Clear();
+                foreach (var f in findings) { f.PropertyChanged += OnRegistryChanged; RegistryFindings.Add(f); }
+                RegistrySelectedCount = findings.Count(f => f.IsSelected);
+                var sec = findings.Count(f => f.Severity == 3);
+                RegistryStatus = findings.Count == 0
+                    ? "Nenhuma entrada orfa encontrada."
+                    : $"{findings.Count} entrada(s) orfa(s)" + (sec > 0 ? $" - {sec} relevante(s) para seguranca" : "");
+            });
+            ReportDone(mod, findings.Count, RegistryStatus);
+            SetProgress(100, RegistryStatus);
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex) { ReportFailed(mod, ex.Message); AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsBusy = false; }
+    }
+
+    private void OnRegistryChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(RegistryFinding.IsSelected))
+            RunOnUi(() => RegistrySelectedCount = RegistryFindings.Count(f => f.IsSelected));
+    }
+
+    [RelayCommand]
+    private void SelectAllRegistry()
+    { foreach (var f in RegistryFindings) f.IsSelected = true; RegistrySelectedCount = RegistryFindings.Count; }
+
+    [RelayCommand]
+    private void SelectSecurityRegistry()
+    { foreach (var f in RegistryFindings) f.IsSelected = f.Severity >= 2; RegistrySelectedCount = RegistryFindings.Count(f => f.IsSelected); }
+
+    [RelayCommand]
+    private void ClearRegistrySelection()
+    { foreach (var f in RegistryFindings) f.IsSelected = false; RegistrySelectedCount = 0; }
+
+    [RelayCommand]
+    private async Task CleanRegistryAsync()
+    {
+        if (IsBusy) return;
+        var sel = RegistryFindings.Where(f => f.IsSelected).ToList();
+        if (sel.Count == 0) { StatusText = "Selecione ao menos uma entrada."; return; }
+
+        var confirm = MessageBox.Show(
+            $"Remover {sel.Count} entrada(s) do registro?\n\n" +
+            "Um backup .reg sera criado ANTES da remocao. Se algo quebrar, " +
+            "de duplo clique no arquivo de backup para restaurar tudo." + "\n\n" +
+            "Lembrete: limpar registro nao acelera o Windows. O ganho real e de " +
+            "higiene e, no caso das regras de firewall orfas, de seguranca.",
+            "Curupira - Limpeza de registro",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        _cts = new CancellationTokenSource();
+        try
+        {
+            IsBusy = true; IsIndeterminate = true;
+            SetProgress(0, "Criando backup e removendo...");
+            var result = await _registry.CleanAsync(sel, AppendLog, _cts.Token);
+
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                StatusText = result.Error;
+            }
+            else
+            {
+                LastRegistryBackup = result.BackupFile;
+                StatusText = $"{result.Removed} entrada(s) removida(s). Backup salvo.";
+                await ScanRegistryAsync();
+            }
+        }
+        catch (OperationCanceledException) { StatusText = "Cancelado."; }
+        catch (Exception ex) { AppendLog($"ERRO: {ex.Message}"); }
+        finally { IsIndeterminate = false; IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private void OpenRegistryBackups()
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(_registry.BackupDirectory);
+            System.Diagnostics.Process.Start("explorer.exe", _registry.BackupDirectory);
+        }
+        catch (Exception ex) { AppendLog($"Nao foi possivel abrir a pasta: {ex.Message}"); }
     }
 
     [RelayCommand]
