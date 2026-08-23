@@ -69,7 +69,7 @@ public static class Winapp2Parser
     public static List<Winapp2Entry> Parse(string iniContent)
     {
         var entries = new List<Winapp2Entry>();
-        Winapp2Entry? current = null;
+
         string name = "", category = "Aplicativos", warning = "";
         bool defaultChecked = false;
         var detectReg = new List<string>();

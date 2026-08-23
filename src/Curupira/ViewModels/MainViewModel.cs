@@ -1233,9 +1233,20 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Navigate(string? index)
+    // Aceita object porque os cards do painel passam TargetSection (int) e os
+    // botões do XAML passam literais de string. Um RelayCommand<string> lança
+    // ao receber int, derrubando a UI no meio do render.
+    private void Navigate(object? index)
     {
-        if (int.TryParse(index, out var i)) SelectedSection = i;
+        switch (index)
+        {
+            case int i:
+                SelectedSection = i;
+                break;
+            case string s when int.TryParse(s, out var parsed):
+                SelectedSection = parsed;
+                break;
+        }
     }
 
     [RelayCommand]
