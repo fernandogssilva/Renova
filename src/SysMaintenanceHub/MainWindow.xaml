@@ -3,14 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SysMaintenanceHub.ViewModels"
         xmlns:conv="clr-namespace:SysMaintenanceHub.Converters"
-        xmlns:models="clr-namespace:SysMaintenanceHub.Models"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Wintal — A saúde do seu Windows"
-        Icon="Assets/Wintal.ico"
-        Height="820" Width="1280"
-        MinHeight="600" MinWidth="1000"
+        Title="Curupira — Manutenção, desempenho e segurança"
+        Icon="Assets/Curupira.ico"
+        Height="860" Width="1420"
+        MinHeight="640" MinWidth="1120"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Bg0Brush}"
         FontFamily="Segoe UI">
@@ -23,621 +22,897 @@
         <conv:BoolToVisibilityConverter x:Key="B2V"/>
         <conv:InverseBoolConverter x:Key="InvBool"/>
         <conv:MegabytesFormatConverter x:Key="MbFmt"/>
+        <conv:IndexToBoolConverter x:Key="Idx"/>
+        <conv:HexToBrushConverter x:Key="Hex2B"/>
+        <conv:CountToVisibilityConverter x:Key="Cnt2V"/>
     </Window.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- 0 Header -->
-            <RowDefinition Height="Auto"/>  <!-- 1 Progress -->
-            <RowDefinition Height="Auto"/>  <!-- 2 KPI cards -->
-            <RowDefinition Height="Auto"/>  <!-- 3 Catálogo Microsoft -->
-            <RowDefinition Height="*"/>     <!-- 4 Main tabs -->
-            <RowDefinition Height="Auto"/>  <!-- 5 Footer -->
-            <RowDefinition Height="0"/>     <!-- 6 reservado -->
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="252"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Padding="24,18" Background="{DynamicResource Bg1Brush}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+        <!-- ============================================================
+                                  ÁREA PRINCIPAL
+             ============================================================ -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- 0 header  -->
+                <RowDefinition Height="Auto"/>   <!-- 1 progress-->
+                <RowDefinition Height="Auto"/>   <!-- 2 KPIs    -->
+                <RowDefinition Height="*"/>      <!-- 3 conteúdo-->
+                <RowDefinition Height="Auto"/>   <!-- 4 rodapé  -->
+            </Grid.RowDefinitions>
 
-                <!-- Spinner / status indicator -->
-                <Grid Grid.Column="0" Width="48" Height="48" Margin="0,0,14,0">
-                    <!-- Trilha (dim ring) -->
-                    <Ellipse Width="48" Height="48" Stroke="{DynamicResource Bg2Brush}" StrokeThickness="5"/>
+            <!-- ================= HEADER ================= -->
+            <Border Grid.Row="0" Padding="22,16" Background="{DynamicResource Bg1Brush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <!-- Arco animado (visível quando IsBusy) -->
-                    <Grid Visibility="{Binding IsBusy, Converter={StaticResource B2V}}"
-                          RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform>
-                            <RotateTransform x:Name="SpinT" Angle="0"/>
-                        </Grid.RenderTransform>
-                        <Grid.Triggers>
-                            <EventTrigger RoutedEvent="Grid.Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="SpinT"
-                                                         Storyboard.TargetProperty="Angle"
-                                                         From="0" To="360" Duration="0:0:0.9"
-                                                         RepeatBehavior="Forever"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Grid.Triggers>
-                        <!-- Arco principal (3/4 do círculo) com gradiente -->
-                        <Path StrokeThickness="5"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                              Data="M 24 2 A 22 22 0 1 1 4 32">
-                            <Path.Stroke>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#38BDF8" Offset="0"/>
-                                    <GradientStop Color="#818CF8" Offset="0.6"/>
-                                    <GradientStop Color="#00000000" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Path.Stroke>
-                        </Path>
-                        <!-- Ponto brilhante no início do arco -->
-                        <Ellipse Width="7" Height="7" Fill="#38BDF8"
-                                 HorizontalAlignment="Center" VerticalAlignment="Top"
-                                 Margin="0,-2,0,0"/>
+                    <!-- Indicador de atividade -->
+                    <Grid Grid.Column="0" Width="46" Height="46" Margin="0,0,14,0">
+                        <Ellipse Width="46" Height="46" Stroke="{DynamicResource Bg2Brush}" StrokeThickness="4"/>
+
+                        <Grid Visibility="{Binding IsBusy, Converter={StaticResource B2V}}"
+                              RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform x:Name="SpinT" Angle="0"/>
+                            </Grid.RenderTransform>
+                            <Grid.Triggers>
+                                <EventTrigger RoutedEvent="Grid.Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="SpinT"
+                                                             Storyboard.TargetProperty="Angle"
+                                                             From="0" To="360" Duration="0:0:0.9"
+                                                             RepeatBehavior="Forever"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Grid.Triggers>
+                            <Path StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Data="M 23 2 A 21 21 0 1 1 4 31"
+                                  Stroke="{DynamicResource BrandGradient}"/>
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-1,0,0"/>
+                        </Grid>
+
+                        <Path Data="M 13 23 L 21 31 L 33 17" Stroke="{DynamicResource SuccessBrush}"
+                              StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Fill="Transparent"
+                              Visibility="{Binding IsBusy, Converter={StaticResource B2V}, ConverterParameter=inv}"/>
                     </Grid>
 
-                    <!-- Check verde quando NÃO estiver ocupado -->
-                    <Path Data="M 14 24 L 22 32 L 34 18" Stroke="{DynamicResource SuccessBrush}"
-                          StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                          Fill="Transparent"
-                          Visibility="{Binding IsBusy, Converter={StaticResource B2V}, ConverterParameter=inv}"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="CURUPIRA" FontSize="23" FontWeight="Bold"
+                                       Foreground="{DynamicResource Fg0Brush}" Margin="0,0,10,0"/>
+                            <TextBlock Text="quem invade, se perde" FontSize="12" FontStyle="Italic"
+                                       Foreground="{DynamicResource Fg3Brush}"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding StatusText}" FontSize="12.5"
+                                   Foreground="{DynamicResource Fg2Brush}" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Executar tudo" Style="{StaticResource FireButton}"
+                                Command="{Binding RunFullMaintenanceCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                Margin="0,0,8,0"/>
+                        <Button Content="Atualizar" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding RefreshAllCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                Margin="0,0,8,0"/>
+                        <Button Content="Cancelar" Style="{StaticResource DangerButton}"
+                                Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"/>
+                    </StackPanel>
                 </Grid>
-
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Wintal" FontSize="24" FontWeight="Bold"
-                                   Foreground="{DynamicResource Fg0Brush}"/>
-                        <TextBlock Text="a saúde do seu Windows" FontSize="13"
-                                   Foreground="{DynamicResource Fg2Brush}"
-                                   Margin="10,0,0,0" VerticalAlignment="Bottom"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding StatusText}" FontSize="12"
-                               Foreground="{DynamicResource Fg3Brush}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="⚡ Executar tudo" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding RunFullMaintenanceCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                            Margin="0,0,8,0"/>
-                    <Button Content="↻ Atualizar" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding RefreshAllCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                            Margin="0,0,8,0"/>
-                    <Button Content="✕ Cancelar" Style="{StaticResource DangerButton}"
-                            Command="{Binding CancelCommand}"
-                            IsEnabled="{Binding IsBusy}"
-                            Margin="0,0,8,0"/>
-                    <Button Content="🌓 Tema" Style="{StaticResource SecondaryButton}"
-                            Command="{Binding ToggleThemeCommand}"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Progress bar -->
-        <ProgressBar Grid.Row="1" Height="4"
-                     Value="{Binding Progress, Mode=OneWay}"
-                     IsIndeterminate="{Binding IsIndeterminate}"
-                     Maximum="100" Minimum="0"/>
-
-        <!-- KPI cards -->
-        <Grid Grid.Row="2" Margin="18,18,18,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="Windows Update" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding PendingWindowsUpdates}" Style="{StaticResource CardValue}"/>
-                    <TextBlock Text="atualizações pendentes" Style="{StaticResource CardCaption}"/>
-                </StackPanel>
             </Border>
 
-            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="Segurança" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding PendingSecurityUpdates}" Style="{StaticResource CardValue}"
-                               Foreground="{DynamicResource WarningBrush}"/>
-                    <TextBlock Text="KBs de segurança" Style="{StaticResource CardCaption}"/>
-                </StackPanel>
-            </Border>
+            <ProgressBar Grid.Row="1" Height="4" Value="{Binding Progress, Mode=OneWay}"
+                         IsIndeterminate="{Binding IsIndeterminate}" Maximum="100" Minimum="0"/>
 
-            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="Aplicativos (winget)" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding PendingApps}" Style="{StaticResource CardValue}"/>
-                    <TextBlock Text="apps com update disponível" Style="{StaticResource CardCaption}"/>
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="3" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="Limpeza estimada" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding TotalCleanableMB, Converter={StaticResource MbFmt}}"
-                               Style="{StaticResource CardValue}"
-                               Foreground="{DynamicResource AccentBrush}"/>
-                    <TextBlock Text="{Binding LastCleanupText, StringFormat='última limpeza: {0}'}"
-                               Style="{StaticResource CardCaption}"/>
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="4" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="Startup" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding StartupAppCount}" Style="{StaticResource CardValue}"/>
-                    <TextBlock Text="apps na inicialização" Style="{StaticResource CardCaption}"/>
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="5" Style="{StaticResource CardBorder}">
-                <StackPanel>
-                    <TextBlock Text="Vulnerabilidades" Style="{StaticResource CardTitle}"/>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding CriticalVulnCount}" Style="{StaticResource CardValue}"
-                                   Foreground="{DynamicResource DangerBrush}"/>
-                        <TextBlock Text="{Binding TotalVulnCount, StringFormat=' / {0}'}"
-                                   Style="{StaticResource CardValue}"
-                                   FontSize="18" VerticalAlignment="Bottom"
-                                   Foreground="{DynamicResource Fg2Brush}"/>
-                    </StackPanel>
-                    <TextBlock Text="críticas / total (MSRC)" Style="{StaticResource CardCaption}"/>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Row 3: Catálogo Microsoft -->
-        <Border Grid.Row="3" Margin="18,12,18,0" Style="{StaticResource CardBorder}">
-            <Grid>
+            <!-- ================= KPIs ================= -->
+            <Grid Grid.Row="2" Margin="18,16,18,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Ellipse Grid.Column="0" Width="12" Height="12" Margin="0,0,10,0"
-                         VerticalAlignment="Center">
-                    <Ellipse.Style>
-                        <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CatalogHasPending}" Value="True">
-                                    <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="Catálogo Microsoft (release-health)" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding CatalogStatus}" Style="{StaticResource CardCaption}"
-                               FontSize="12.5" Margin="0,4,0,0"/>
-                    <TextBlock Margin="0,2,0,0" FontSize="11" Foreground="{DynamicResource Fg3Brush}">
-                        <Run Text="Local:"/>
-                        <Run Text="{Binding CurrentOsBuild}"/>
-                        <Run Text=" · Oficial:"/>
-                        <Run Text="{Binding LatestOfficialKb}"/>
-                        <Run Text="("/><Run Text="{Binding LatestOfficialBuild}"/><Run Text=")"/>
-                    </TextBlock>
-                </StackPanel>
-                <Button Grid.Column="2" Content="Verificar catálogo agora"
-                        Style="{StaticResource SecondaryButton}"
-                        Command="{Binding CheckMicrosoftCatalogCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                        Margin="8,0,8,0" VerticalAlignment="Center"/>
-                <Button Grid.Column="3" Content="Instalar pendentes"
-                        Style="{StaticResource PrimaryButton}"
-                        Command="{Binding InstallWindowsUpdatesCommand}"
-                        IsEnabled="{Binding CatalogHasPending}"
-                        VerticalAlignment="Center"/>
+
+                <Border Grid.Column="0" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="Vulnerabilidades" Style="{StaticResource CardTitle}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding CriticalVulnCount}" Style="{StaticResource CardValue}"
+                                       Foreground="{DynamicResource CriticalBrush}"/>
+                            <TextBlock Text="{Binding TotalVulnCount, StringFormat=' / {0}'}"
+                                       Style="{StaticResource CardValue}" FontSize="17"
+                                       VerticalAlignment="Bottom" Foreground="{DynamicResource Fg3Brush}"/>
+                        </StackPanel>
+                        <TextBlock Text="críticas / total" Style="{StaticResource CardCaption}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="Windows Update" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding PendingWindowsUpdates}" Style="{StaticResource CardValue}"/>
+                        <TextBlock Text="{Binding PendingSecurityUpdates, StringFormat='{}{0} de segurança'}"
+                                   Style="{StaticResource CardCaption}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="Aplicativos" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding PendingApps}" Style="{StaticResource CardValue}"/>
+                        <TextBlock Text="com update disponível" Style="{StaticResource CardCaption}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3" Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="Disco recuperável" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding TotalCleanableMB, Converter={StaticResource MbFmt}}"
+                                   Style="{StaticResource CardValue}" Foreground="{DynamicResource AccentBrush}"/>
+                        <TextBlock Text="{Binding LastCleanupText, StringFormat='última: {0}'}"
+                                   Style="{StaticResource CardCaption}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="Memória RAM" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding MemoryLoadPercent, StringFormat='{}{0}%'}"
+                                   Style="{StaticResource CardValue}"
+                                   Foreground="{DynamicResource AccentAltBrush}"/>
+                        <TextBlock Text="{Binding MemoryStatusText}" Style="{StaticResource CardCaption}"/>
+                    </StackPanel>
+                </Border>
             </Grid>
-        </Border>
 
-        <!-- Main tabs -->
-        <TabControl Grid.Row="4" Margin="18,18,18,0"
-                    Background="Transparent" BorderThickness="0"
-                    Foreground="{DynamicResource Fg1Brush}">
+            <!-- ================= CONTEÚDO ================= -->
+            <TabControl Grid.Row="3" Margin="18,16,18,0" SelectedIndex="{Binding SelectedSection}"
+                        Background="Transparent" BorderThickness="0">
+                <TabControl.Template>
+                    <ControlTemplate TargetType="TabControl">
+                        <ContentPresenter ContentSource="SelectedContent"/>
+                    </ControlTemplate>
+                </TabControl.Template>
 
-            <TabItem Header="Varredura ao vivo">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
-                    <ItemsControl ItemsSource="{Binding ScanReports}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
-                                    <Grid>
+                <!-- 0 · PAINEL -->
+                <TabItem>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Painel geral" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Style="{StaticResource SectionSubtitle}"
+                                       Text="Resumo do estado do sistema. Use o menu à direita para agir em cada área."/>
+
+                            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="Ações rápidas" Style="{StaticResource CardTitle}" Margin="0,0,0,10"/>
+                                    <WrapPanel>
+                                        <Button Content="Corrigir vulnerabilidades" Style="{StaticResource FireButton}"
+                                                Command="{Binding NavigateCommand}" CommandParameter="1" Margin="0,0,8,8"/>
+                                        <Button Content="Liberar RAM" Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding CleanMemoryCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,8"/>
+                                        <Button Content="Limpar disco" Style="{StaticResource PrimaryButton}"
+                                                Command="{Binding RunCleanupCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,8"/>
+                                        <Button Content="Instalar updates" Style="{StaticResource SecondaryButton}"
+                                                Command="{Binding InstallWindowsUpdatesCommand}"
+                                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,8"/>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource CardBorder}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Grid.Column="0" Width="11" Height="11" Margin="0,0,12,0" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CatalogHasPending}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Build do Windows vs. catálogo oficial" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock Text="{Binding CatalogStatus}" Style="{StaticResource CardCaption}" FontSize="12.5"/>
+                                        <TextBlock Text="{Binding CurrentOsBuild}" Style="{StaticResource CardCaption}" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Content="Ver catálogo" Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding NavigateCommand}" CommandParameter="3" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 1 · VULNERABILIDADES -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Vulnerabilidades" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Style="{StaticResource SectionSubtitle}"
+                                       Text="CVEs da Microsoft (MSRC) e falhas de configuração local. Marque várias e corrija de uma vez."/>
+                        </StackPanel>
+
+                        <!-- Barra de seleção em lote -->
+                        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Padding="12" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Button Content="Todas" Style="{StaticResource ChipButton}"
+                                            Command="{Binding SelectAllVulnsCommand}" Margin="0,0,6,0"/>
+                                    <Button Content="Só críticas" Style="{StaticResource ChipButton}"
+                                            Command="{Binding SelectCriticalVulnsCommand}" Margin="0,0,6,0"/>
+                                    <Button Content="Corrigíveis automaticamente" Style="{StaticResource ChipButton}"
+                                            Command="{Binding SelectAutoFixableVulnsCommand}" Margin="0,0,6,0"/>
+                                    <Button Content="Limpar" Style="{StaticResource ChipButton}"
+                                            Command="{Binding ClearVulnSelectionCommand}"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="16,0"
+                                           Foreground="{DynamicResource Fg2Brush}" FontSize="12.5">
+                                    <Run Text="{Binding SelectedVulnCount}" FontWeight="Bold"/>
+                                    <Run Text="selecionada(s) de"/>
+                                    <Run Text="{Binding TotalVulnCount}"/>
+                                </TextBlock>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Button Content="Varrer novamente" Style="{StaticResource SecondaryButton}"
+                                            Command="{Binding RunVulnScanCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                                    <Button Style="{StaticResource FireButton}"
+                                            Command="{Binding ApplySelectedPatchesCommand}"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}">
+                                        <TextBlock>
+                                            <Run Text="Corrigir selecionadas ("/><Run Text="{Binding SelectedVulnCount}"/><Run Text=")"/>
+                                        </TextBlock>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Grid.Row="2" Text="{Binding VulnScanStatus}" Margin="2,0,0,8"
+                                   Foreground="{DynamicResource Fg3Brush}" FontSize="11.5"/>
+
+                        <DataGrid Grid.Row="3" Style="{StaticResource DataGridBase}"
+                                  ItemsSource="{Binding Vulnerabilities}" IsReadOnly="False"
+                                  SelectionMode="Extended">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Width="42" CanUserSort="False">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="✓" FontSize="12"/>
+                                    </DataGridTemplateColumn.Header>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Severidade" Width="108" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="7,3" HorizontalAlignment="Left">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource Bg3Brush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                                                                <Setter Property="Background" Value="{DynamicResource CriticalBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Important">
+                                                                <Setter Property="Background" Value="{DynamicResource WarningBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Moderate">
+                                                                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Severity}" Foreground="White"
+                                                           FontWeight="SemiBold" FontSize="10.5"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="CVSS" Binding="{Binding CvssScore, StringFormat={}{0:N1}}" Width="58" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Identificador" Binding="{Binding Cve}" Width="145" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Correção" Binding="{Binding Kb}" Width="210" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Descrição" Binding="{Binding Title}" Width="*" IsReadOnly="True"/>
+
+                                <DataGridTemplateColumn Header="Estado" Width="100" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StateText}" FontSize="11.5" FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{Binding StateColor, Converter={StaticResource Hex2B}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Ações" Width="215" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Corrigir" Style="{StaticResource PrimaryButton}"
+                                                        Padding="9,4" FontSize="11" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.ApplyPatchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Content="MSRC" Style="{StaticResource ChipButton}" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding MsrcUrl}"/>
+                                                <Button Content="Catálogo" Style="{StaticResource ChipButton}"
+                                                        Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding CatalogUrl}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- 2 · WINDOWS UPDATE -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Windows Update" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Atualizações do sistema pendentes, incluindo pacotes de segurança."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Content="Instalar todas" Style="{StaticResource FireButton}"
+                                HorizontalAlignment="Left" Margin="0,0,0,10"
+                                Command="{Binding InstallWindowsUpdatesCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                        <DataGrid Grid.Row="2" Style="{StaticResource DataGridBase}" IsReadOnly="True"
+                                  ItemsSource="{Binding WindowsUpdates}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="KB" Binding="{Binding Kb}" Width="115"/>
+                                <DataGridTextColumn Header="Título" Binding="{Binding Title}" Width="*"/>
+                                <DataGridTextColumn Header="Categoria" Binding="{Binding Category}" Width="215"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeMB, StringFormat={}{0:N1} MB}" Width="105"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- 3 · CATÁLOGO MICROSOFT -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Catálogo oficial da Microsoft" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Compara a build instalada com a última publicada no release-health da Microsoft."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Consultar agora" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding CheckMicrosoftCatalogCommand}"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
+                            <Button Content="Instalar pendentes" Style="{StaticResource FireButton}"
+                                    Command="{Binding InstallWindowsUpdatesCommand}"
+                                    IsEnabled="{Binding CatalogHasPending}"/>
+                        </StackPanel>
+                        <TextBlock Grid.Row="2" Margin="2,0,0,10" FontSize="12" Foreground="{DynamicResource Fg2Brush}">
+                            <Run Text="Local:"/><Run Text="{Binding CurrentOsBuild}" FontWeight="SemiBold"/>
+                            <LineBreak/>
+                            <Run Text="Oficial:"/><Run Text="{Binding LatestOfficialKb}" FontWeight="SemiBold"/>
+                            <Run Text="(build"/><Run Text="{Binding LatestOfficialBuild}"/><Run Text=")"/>
+                        </TextBlock>
+                        <DataGrid Grid.Row="3" Style="{StaticResource DataGridBase}" IsReadOnly="True"
+                                  ItemsSource="{Binding CatalogPending}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="KB" Binding="{Binding Kb}" Width="120"/>
+                                <DataGridTextColumn Header="Build" Binding="{Binding BuildString}" Width="120"/>
+                                <DataGridTextColumn Header="Publicado" Binding="{Binding PublishedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
+                                <DataGridTemplateColumn Header="Microsoft Update Catalog" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Abrir no site da Microsoft" Style="{StaticResource ChipButton}"
+                                                    HorizontalAlignment="Left"
+                                                    Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding CatalogUrl}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- 4 · LIMPEZA DE DISCO -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Limpeza de disco" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Temporários, caches de desenvolvimento e navegador, e o Disk Cleanup do Windows."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Content="Executar limpeza" Style="{StaticResource FireButton}"
+                                HorizontalAlignment="Left" Margin="0,0,0,10"
+                                Command="{Binding RunCleanupCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                        <DataGrid Grid.Row="2" Style="{StaticResource DataGridBase}" IsReadOnly="True"
+                                  ItemsSource="{Binding Cleanables}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Categoria" Binding="{Binding Name}" Width="230"/>
+                                <DataGridTextColumn Header="Caminho" Binding="{Binding Path}" Width="*"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeMB, StringFormat={}{0:N1} MB}" Width="130"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- 5 · MEMÓRIA RAM -->
+                <TabItem>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Memória RAM" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Compacta o working set dos processos e descarta a standby list, devolvendo memória ao sistema."
+                                       Style="{StaticResource SectionSubtitle}"/>
+
+                            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,14">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Indicador de estado colorido -->
-                                        <Ellipse Grid.Row="0" Grid.RowSpan="3" Grid.Column="0"
-                                                 Width="14" Height="14" Margin="0,4,14,0"
-                                                 VerticalAlignment="Top">
-                                            <Ellipse.Fill>
-                                                <SolidColorBrush Color="{Binding StateColor}"/>
-                                            </Ellipse.Fill>
-                                        </Ellipse>
-
-                                        <!-- Nome do módulo + estado -->
-                                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource Fg0Brush}"/>
-                                            <TextBlock Text="{Binding StateText}" FontSize="11"
-                                                       Foreground="{DynamicResource Fg3Brush}"
-                                                       Margin="10,3,0,0"/>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Uso atual" Style="{StaticResource CardTitle}"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding MemoryLoadPercent, StringFormat='{}{0}%'}"
+                                                           Style="{StaticResource CardValue}" FontSize="38"
+                                                           Foreground="{DynamicResource AccentAltBrush}"/>
+                                                <TextBlock Text="{Binding MemoryStatusText}" Style="{StaticResource CardCaption}"
+                                                           FontSize="13" VerticalAlignment="Bottom" Margin="12,0,0,8"/>
+                                            </StackPanel>
                                         </StackPanel>
-
-                                        <!-- Contador -->
-                                        <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal"
-                                                    VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding FoundCount}" FontSize="24" FontWeight="Bold"
-                                                       Foreground="{DynamicResource AccentBrush}"/>
-                                            <TextBlock Text="itens" FontSize="11"
-                                                       Foreground="{DynamicResource Fg3Brush}"
-                                                       Margin="6,0,0,4" VerticalAlignment="Bottom"/>
-                                        </StackPanel>
-
-                                        <!-- Progress bar -->
-                                        <ProgressBar Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                                                     Value="{Binding Progress, Mode=OneWay}"
-                                                     Maximum="100" Height="4" Margin="0,8,0,4"/>
-
-                                        <!-- Atividade atual + último item + ação sugerida -->
-                                        <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
-                                            <TextBlock Text="{Binding CurrentActivity}" FontSize="12"
-                                                       Foreground="{DynamicResource Fg2Brush}"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock FontSize="11" Foreground="{DynamicResource Fg3Brush}"
-                                                       TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
-                                                <Run Text="Último:" FontStyle="Italic"/>
-                                                <Run Text="{Binding LastFoundItem}"/>
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding ActionHint}" FontSize="11.5"
-                                                       Foreground="{DynamicResource SuccessBrush}"
-                                                       Margin="0,4,0,0" FontWeight="SemiBold"
-                                                       TextWrapping="Wrap"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="Atualizar leitura" Style="{StaticResource SecondaryButton}"
+                                                    Command="{Binding RefreshMemoryCommand}" Margin="0,0,8,0"/>
+                                            <Button Content="Liberar memória agora" Style="{StaticResource FireButton}"
+                                                    Command="{Binding CleanMemoryCommand}"
+                                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
                                         </StackPanel>
                                     </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </TabItem>
 
-            <TabItem Header="Windows Update">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Button Grid.Row="0" Content="Instalar todos" Style="{StaticResource PrimaryButton}"
-                            HorizontalAlignment="Left" Margin="0,0,0,8"
-                            Command="{Binding InstallWindowsUpdatesCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding WindowsUpdates}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" GridLinesVisibility="None"
-                              EnableRowVirtualization="True" EnableColumnVirtualization="True"
-                              VirtualizingPanel.IsVirtualizing="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling"
-                              ScrollViewer.CanContentScroll="True"
-                              Background="{DynamicResource Bg1Brush}"
-                              RowBackground="{DynamicResource Bg1Brush}"
-                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                              Foreground="{DynamicResource Fg1Brush}"
-                              BorderThickness="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="KB"        Binding="{Binding Kb}"       Width="120"/>
-                            <DataGridTextColumn Header="Título"    Binding="{Binding Title}"    Width="*"/>
-                            <DataGridTextColumn Header="Categoria" Binding="{Binding Category}" Width="220"/>
-                            <DataGridTextColumn Header="Tamanho (MB)" Binding="{Binding SizeMB, StringFormat={}{0:N1}}" Width="120"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                                    <ProgressBar Value="{Binding MemoryLoadPercent, Mode=OneWay}" Maximum="100" Height="10"
+                                                 Foreground="{DynamicResource AccentAltBrush}"/>
 
-            <TabItem Header="Atualizações pendentes">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Button Grid.Row="0" Content="Atualizar tudo" Style="{StaticResource PrimaryButton}"
-                            HorizontalAlignment="Left" Margin="0,0,0,8"
-                            Command="{Binding UpgradeAppsCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding WingetUpdates}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" GridLinesVisibility="None"
-                              Background="{DynamicResource Bg1Brush}"
-                              RowBackground="{DynamicResource Bg1Brush}"
-                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                              Foreground="{DynamicResource Fg1Brush}"
-                              BorderThickness="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Nome"    Binding="{Binding Name}"             Width="*"/>
-                            <DataGridTextColumn Header="Id"      Binding="{Binding Id}"               Width="260"/>
-                            <DataGridTextColumn Header="Atual"   Binding="{Binding CurrentVersion}"   Width="140"/>
-                            <DataGridTextColumn Header="Disponível" Binding="{Binding AvailableVersion}" Width="140"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                                    <TextBlock Margin="0,10,0,0" Style="{StaticResource CardCaption}"
+                                               Visibility="{Binding LastMemoryFreedMB, Converter={StaticResource Cnt2V}}">
+                                        <Run Text="Última liberação:"/>
+                                        <Run Text="{Binding LastMemoryFreedMB, StringFormat={}{0:N0} MB}"
+                                             FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
 
-            <TabItem Header="Limpeza">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Button Grid.Row="0" Content="Executar limpeza + Disk Cleanup" Style="{StaticResource PrimaryButton}"
-                            HorizontalAlignment="Left" Margin="0,0,0,8"
-                            Command="{Binding RunCleanupCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Cleanables}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" GridLinesVisibility="None"
-                              Background="{DynamicResource Bg1Brush}"
-                              RowBackground="{DynamicResource Bg1Brush}"
-                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                              Foreground="{DynamicResource Fg1Brush}"
-                              BorderThickness="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Categoria" Binding="{Binding Name}"    Width="220"/>
-                            <DataGridTextColumn Header="Caminho"   Binding="{Binding Path}"    Width="*"/>
-                            <DataGridTextColumn Header="Tamanho"   Binding="{Binding SizeMB, StringFormat={}{0:N1} MB}" Width="140"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                            <Border Style="{StaticResource CardBorder}">
+                                <StackPanel>
+                                    <TextBlock Text="Como funciona — e quando ajuda de verdade"
+                                               Style="{StaticResource CardTitle}" Margin="0,0,0,8"/>
+                                    <TextBlock Style="{StaticResource CardCaption}" FontSize="12" LineHeight="19" TextWrapping="Wrap">
+                                        O Windows já gerencia memória bem sozinho — esta função não "cria" RAM.
+                                        O que ela faz: (1) compacta o working set de cada processo, devolvendo páginas
+                                        que ficaram retidas; (2) descarta a standby list, que é cache de arquivos já
+                                        gravado em disco, convertendo "em espera" em memória livre de verdade.
+                                        <LineBreak/><LineBreak/>
+                                        O ganho é perceptível depois de fechar aplicativos pesados (IDE, máquina virtual,
+                                        navegador com muitas abas) ou antes de abrir algo que precisa de bastante memória.
+                                        Como efeito colateral, os próximos acessos a arquivos ficam mais lentos até o cache
+                                        reaquecer — por isso não vale executar de minuto em minuto.
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
 
-            <TabItem Header="Startup">
-                <DataGrid Margin="0,10,0,0" ItemsSource="{Binding StartupApps}"
-                          AutoGenerateColumns="False" HeadersVisibility="Column"
-                          CanUserAddRows="False" GridLinesVisibility="None"
-                          Background="{DynamicResource Bg1Brush}"
-                          RowBackground="{DynamicResource Bg1Brush}"
-                          AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                          Foreground="{DynamicResource Fg1Brush}"
-                          BorderThickness="0" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Nome"     Binding="{Binding Name}"     Width="260"/>
-                        <DataGridTextColumn Header="Local"    Binding="{Binding Location}" Width="160"/>
-                        <DataGridTextColumn Header="Comando"  Binding="{Binding Command}"  Width="*"/>
-                        <DataGridCheckBoxColumn Header="Ativo" Binding="{Binding Enabled}" Width="70"/>
-                        <DataGridTemplateColumn Header="Ação" Width="120">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="Alternar" Style="{StaticResource SecondaryButton}"
-                                            Padding="10,4"
-                                            Command="{Binding DataContext.ToggleStartupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </TabItem>
-
-            <TabItem Header="Discos">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Button Grid.Row="0" Content="Otimizar/Desfragmentar" Style="{StaticResource PrimaryButton}"
-                            HorizontalAlignment="Left" Margin="0,0,0,8"
-                            Command="{Binding DefragAllCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Drives}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" GridLinesVisibility="None"
-                              Background="{DynamicResource Bg1Brush}"
-                              RowBackground="{DynamicResource Bg1Brush}"
-                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                              Foreground="{DynamicResource Fg1Brush}"
-                              BorderThickness="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Drive"           Binding="{Binding Drive}"                                          Width="80"/>
-                            <DataGridTextColumn Header="Fragmentação (%)" Binding="{Binding FragmentationPercent, StringFormat={}{0:N0}}"  Width="160"/>
-                            <DataGridTextColumn Header="Último defrag"    Binding="{Binding LastDefrag, StringFormat={}{0:dd/MM/yyyy}}"    Width="140"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Vulnerabilidades">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="Varrer MSRC agora" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding RunVulnScanCommand}"
+                <!-- 6 · DISCOS -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Discos" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Fragmentação por unidade. SSDs recebem TRIM; HDDs recebem desfragmentação."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Content="Otimizar unidades" Style="{StaticResource FireButton}"
+                                HorizontalAlignment="Left" Margin="0,0,0,10"
+                                Command="{Binding DefragAllCommand}"
                                 IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    </StackPanel>
-                    <TextBlock Grid.Row="1" Foreground="{DynamicResource Fg2Brush}" FontSize="12" Margin="0,0,0,8">
-                        <Run Text="Fonte: MSRC CVRF API — https://api.msrc.microsoft.com/cvrf/v3.0"/>
-                        <LineBreak/>
-                        <Run Text="Status:"/><Run Text="{Binding VulnScanStatus}" FontWeight="SemiBold"/>
-                    </TextBlock>
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding Vulnerabilities}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" GridLinesVisibility="None"
-                              Background="{DynamicResource Bg1Brush}"
-                              RowBackground="{DynamicResource Bg1Brush}"
-                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                              Foreground="{DynamicResource Fg1Brush}"
-                              BorderThickness="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Severidade" Width="110">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="{DynamicResource Bg3Brush}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Severity}" Value="Critical">
-                                                            <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Severity}" Value="Important">
-                                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Severity}" Value="Moderate">
-                                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding Severity}" Foreground="White" FontWeight="SemiBold" FontSize="11"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="CVSS"  Binding="{Binding CvssScore, StringFormat={}{0:N1}}" Width="60"/>
-                            <DataGridTextColumn Header="ID"    Binding="{Binding Cve}"                              Width="150"/>
-                            <DataGridTextColumn Header="Correção / KB" Binding="{Binding Kb}"                       Width="220"/>
-                            <DataGridTextColumn Header="Título / Descrição" Binding="{Binding Title}"               Width="*"/>
-                            <DataGridTextColumn Header="Detectado" Binding="{Binding ReleaseDate, StringFormat={}{0:dd/MM/yyyy}}" Width="95"/>
-                            <DataGridTemplateColumn Header="Ações" Width="280">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="Aplicar patch" Style="{StaticResource PrimaryButton}"
-                                                    Padding="10,4" Margin="0,0,4,0"
-                                                    Command="{Binding DataContext.ApplyPatchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        <DataGrid Grid.Row="2" Style="{StaticResource DataGridBase}" IsReadOnly="True"
+                                  ItemsSource="{Binding Drives}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Unidade" Binding="{Binding Drive}" Width="100"/>
+                                <DataGridTextColumn Header="Fragmentação" Binding="{Binding FragmentationPercent, StringFormat={}{0:N0}%}" Width="150"/>
+                                <DataGridTextColumn Header="Última otimização" Binding="{Binding LastDefrag, StringFormat={}{0:dd/MM/yyyy}}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- 7 · INICIALIZAÇÃO -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Inicialização" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Programas que sobem junto com o Windows. Desativar os desnecessários acelera o boot."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <DataGrid Grid.Row="1" Style="{StaticResource DataGridBase}" IsReadOnly="True"
+                                  ItemsSource="{Binding StartupApps}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="240"/>
+                                <DataGridTextColumn Header="Origem" Binding="{Binding Location}" Width="160"/>
+                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                                <DataGridCheckBoxColumn Header="Ativo" Binding="{Binding Enabled}" Width="70"/>
+                                <DataGridTemplateColumn Header="Ação" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Alternar" Style="{StaticResource ChipButton}"
+                                                    Command="{Binding DataContext.ToggleStartupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}"/>
-                                            <Button Content="MSRC" Style="{StaticResource SecondaryButton}" Padding="10,4" Margin="0,0,4,0"
-                                                    Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding MsrcUrl}"/>
-                                            <Button Content="Catálogo" Style="{StaticResource SecondaryButton}" Padding="10,4"
-                                                    Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding CatalogUrl}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
 
-            <TabItem Header="Catálogo Microsoft">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="Consultar catálogo agora" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding CheckMicrosoftCatalogCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}" Margin="0,0,8,0"/>
-                        <Button Content="Instalar pendentes" Style="{StaticResource SecondaryButton}"
-                                Command="{Binding InstallWindowsUpdatesCommand}"
-                                IsEnabled="{Binding CatalogHasPending}"/>
-                    </StackPanel>
-                    <TextBlock Grid.Row="1" Margin="0,0,0,8" Foreground="{DynamicResource Fg2Brush}" FontSize="12">
-                        <Run Text="Comparação: sua build"/>
-                        <Run Text="{Binding CurrentOsBuild}" FontWeight="SemiBold"/>
-                        <Run Text=" vs. última publicada pela Microsoft (KB"/>
-                        <Run Text="{Binding LatestOfficialKb}"/>
-                        <Run Text=", build"/>
-                        <Run Text="{Binding LatestOfficialBuild}"/>
-                        <Run Text=")."/>
-                    </TextBlock>
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding CatalogPending}"
-                              AutoGenerateColumns="False" HeadersVisibility="Column"
-                              CanUserAddRows="False" GridLinesVisibility="None"
-                              Background="{DynamicResource Bg1Brush}"
-                              RowBackground="{DynamicResource Bg1Brush}"
-                              AlternatingRowBackground="{DynamicResource Bg2Brush}"
-                              Foreground="{DynamicResource Fg1Brush}"
-                              BorderThickness="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="KB"         Binding="{Binding Kb}"            Width="120"/>
-                            <DataGridTextColumn Header="Build"      Binding="{Binding BuildString}"   Width="120"/>
-                            <DataGridTextColumn Header="Publicado"  Binding="{Binding PublishedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
-                            <DataGridTemplateColumn Header="Catálogo (Microsoft)" Width="*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Abrir no site da Microsoft"
-                                                Style="{StaticResource SecondaryButton}"
-                                                Padding="10,4" HorizontalAlignment="Left"
-                                                Command="{Binding DataContext.OpenCatalogUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding CatalogUrl}"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                <!-- 8 · APLICATIVOS -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Aplicativos" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Programas com versão mais nova disponível via winget."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Content="Atualizar todos" Style="{StaticResource FireButton}"
+                                HorizontalAlignment="Left" Margin="0,0,0,10"
+                                Command="{Binding UpgradeAppsCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                        <DataGrid Grid.Row="2" Style="{StaticResource DataGridBase}" IsReadOnly="True"
+                                  ItemsSource="{Binding WingetUpdates}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Identificador" Binding="{Binding Id}" Width="250"/>
+                                <DataGridTextColumn Header="Atual" Binding="{Binding CurrentVersion}" Width="130"/>
+                                <DataGridTextColumn Header="Disponível" Binding="{Binding AvailableVersion}" Width="130"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
 
-            <TabItem Header="Logs">
-                <Grid Margin="0,10,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Button Grid.Row="0" Content="Abrir pasta de logs" Style="{StaticResource SecondaryButton}"
-                            HorizontalAlignment="Left" Margin="0,0,0,8"
-                            Command="{Binding OpenLogsFolderCommand}"/>
-                    <Border Grid.Row="1" Background="{DynamicResource LogBgBrush}"
-                            BorderBrush="{DynamicResource Bg3Brush}" BorderThickness="1" CornerRadius="6">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12" x:Name="LogScroll">
-                            <ItemsControl ItemsSource="{Binding LogLines}">
+                <!-- 9 · VARREDURA AO VIVO -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Varredura ao vivo" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Cada módulo mostrando o que está analisando e o que encontrou, em tempo real."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ScanReports}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas"
-                                                   FontSize="11.5" Foreground="{DynamicResource Fg2Brush}"
-                                                   TextWrapping="Wrap"/>
+                                        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <Ellipse Grid.Row="0" Grid.RowSpan="3" Grid.Column="0"
+                                                         Width="12" Height="12" Margin="0,4,14,0" VerticalAlignment="Top"
+                                                         Fill="{Binding StateColor, Converter={StaticResource Hex2B}}"/>
+
+                                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Name}" FontSize="14.5" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource Fg0Brush}"/>
+                                                    <TextBlock Text="{Binding StateText}" FontSize="11" Margin="10,3,0,0"
+                                                               Foreground="{DynamicResource Fg3Brush}"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FoundCount}" FontSize="22" FontWeight="Bold"
+                                                               Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock Text="itens" FontSize="10.5" Margin="5,0,0,3"
+                                                               VerticalAlignment="Bottom" Foreground="{DynamicResource Fg3Brush}"/>
+                                                </StackPanel>
+
+                                                <ProgressBar Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Height="4"
+                                                             Margin="0,8,0,4" Maximum="100"
+                                                             Value="{Binding Progress, Mode=OneWay}"/>
+
+                                                <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding CurrentActivity}" FontSize="12"
+                                                               Foreground="{DynamicResource Fg2Brush}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock FontSize="11" Margin="0,2,0,0"
+                                                               Foreground="{DynamicResource Fg3Brush}" TextTrimming="CharacterEllipsis">
+                                                        <Run Text="Último:" FontStyle="Italic"/><Run Text="{Binding LastFoundItem}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding ActionHint}" FontSize="11.5" FontWeight="SemiBold"
+                                                               Margin="0,5,0,0" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource SuccessBrush}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                    </Border>
-                </Grid>
-            </TabItem>
-        </TabControl>
+                    </Grid>
+                </TabItem>
 
-        <!-- Footer -->
-        <Border Grid.Row="5" Background="{DynamicResource Bg1Brush}" Padding="18,10">
+                <!-- 10 · LOGS -->
+                <TabItem>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Logs" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Registro completo das operações. Também gravado em disco, com rotação diária."
+                                       Style="{StaticResource SectionSubtitle}"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Content="Abrir pasta de logs" Style="{StaticResource SecondaryButton}"
+                                HorizontalAlignment="Left" Margin="0,0,0,10"
+                                Command="{Binding OpenLogsFolderCommand}"/>
+                        <Border Grid.Row="2" Background="{DynamicResource LogBgBrush}"
+                                BorderBrush="{DynamicResource Bg3Brush}" BorderThickness="1" CornerRadius="8">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14" x:Name="LogScroll">
+                                <ItemsControl ItemsSource="{Binding LogLines}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas"
+                                                       FontSize="11.5" Foreground="#8FB5A2" TextWrapping="Wrap"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <!-- ================= RODAPÉ ================= -->
+            <Border Grid.Row="4" Background="{DynamicResource Bg1Brush}" Padding="20,9" Margin="0,14,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg3Brush}"
+                               FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
+                               Text="Curupira 2.0 · DataSec"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============================================================
+                              MENU LATERAL (DIREITA)
+             ============================================================ -->
+        <Border Grid.Column="1" Background="{DynamicResource Bg1Brush}"
+                BorderBrush="{DynamicResource Bg2Brush}" BorderThickness="1,0,0,0">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg2Brush}" FontSize="12"/>
-                <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                           Text="Wintal · v1.4 · by DataSec"/>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Marca -->
+                <Border Grid.Row="0" Padding="16,20,16,14">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="Assets/Curupira.ico" Width="34" Height="34" Margin="0,0,11,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Curupira" FontSize="16" FontWeight="Bold"
+                                       Foreground="{DynamicResource Fg0Brush}"/>
+                            <TextBlock Text="versão 2.0" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="◈" Content="Painel"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=0, Mode=TwoWay}"/>
+
+                        <TextBlock Text="SEGURANÇA" Style="{StaticResource NavGroupHeader}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⚠" Content="Vulnerabilidades"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=1, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⭳" Content="Windows Update"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=2, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="◎" Content="Catálogo Microsoft"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=3, Mode=TwoWay}"/>
+
+                        <TextBlock Text="DESEMPENHO" Style="{StaticResource NavGroupHeader}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="✧" Content="Limpeza de disco"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=4, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="▤" Content="Memória RAM"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=5, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⛁" Content="Discos"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=6, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="⏻" Content="Inicialização"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=7, Mode=TwoWay}"/>
+
+                        <TextBlock Text="SISTEMA" Style="{StaticResource NavGroupHeader}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="▣" Content="Aplicativos"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=8, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="◐" Content="Varredura ao vivo"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=9, Mode=TwoWay}"/>
+                        <RadioButton Style="{StaticResource NavItem}" GroupName="Nav" Tag="☰" Content="Logs"
+                                     IsChecked="{Binding SelectedSection, Converter={StaticResource Idx}, ConverterParameter=10, Mode=TwoWay}"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Padding="14,12" BorderBrush="{DynamicResource Bg2Brush}" BorderThickness="0,1,0,0">
+                    <Button Content="Alternar tema claro / escuro" Style="{StaticResource SecondaryButton}"
+                            HorizontalAlignment="Stretch" Command="{Binding ToggleThemeCommand}"/>
+                </Border>
             </Grid>
         </Border>
+
+        <!-- ============================================================
+             OVERLAY DE CORREÇÃO — animação enquanto aplica patches
+             ============================================================ -->
+        <Grid Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="100"
+              Visibility="{Binding IsApplyingFixes, Converter={StaticResource B2V}}">
+            <Rectangle Fill="{DynamicResource Bg0Brush}" Opacity="0.88"/>
+
+            <Border Style="{StaticResource CardBorder}" Padding="46,38"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                <StackPanel HorizontalAlignment="Center">
+
+                    <!-- Anéis concêntricos girando em sentidos opostos -->
+                    <Grid Width="130" Height="130" Margin="0,0,0,26">
+                        <Ellipse Width="130" Height="130" Stroke="{DynamicResource Bg2Brush}" StrokeThickness="3"/>
+
+                        <Grid RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform><RotateTransform x:Name="R1" Angle="0"/></Grid.RenderTransform>
+                            <Grid.Triggers>
+                                <EventTrigger RoutedEvent="Grid.Loaded">
+                                    <BeginStoryboard><Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="R1" Storyboard.TargetProperty="Angle"
+                                                         From="0" To="360" Duration="0:0:2.4" RepeatBehavior="Forever"/>
+                                    </Storyboard></BeginStoryboard>
+                                </EventTrigger>
+                            </Grid.Triggers>
+                            <Path Stroke="{DynamicResource AccentBrush}" StrokeThickness="4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Data="M 65 3 A 62 62 0 0 1 127 65"/>
+                        </Grid>
+
+                        <Grid RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform><RotateTransform x:Name="R2" Angle="0"/></Grid.RenderTransform>
+                            <Grid.Triggers>
+                                <EventTrigger RoutedEvent="Grid.Loaded">
+                                    <BeginStoryboard><Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="R2" Storyboard.TargetProperty="Angle"
+                                                         From="360" To="0" Duration="0:0:1.6" RepeatBehavior="Forever"/>
+                                    </Storyboard></BeginStoryboard>
+                                </EventTrigger>
+                            </Grid.Triggers>
+                            <Path Stroke="{DynamicResource AccentAltBrush}" StrokeThickness="4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Data="M 65 18 A 47 47 0 0 1 112 65"/>
+                        </Grid>
+
+                        <!-- Núcleo pulsante -->
+                        <Ellipse Width="34" Height="34" Fill="{DynamicResource BrandGradient}"
+                                 RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform><ScaleTransform x:Name="Pulse" ScaleX="1" ScaleY="1"/></Ellipse.RenderTransform>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Ellipse.Loaded">
+                                    <BeginStoryboard><Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Pulse" Storyboard.TargetProperty="ScaleX"
+                                                         From="0.75" To="1.15" Duration="0:0:0.85"
+                                                         AutoReverse="True" RepeatBehavior="Forever"/>
+                                        <DoubleAnimation Storyboard.TargetName="Pulse" Storyboard.TargetProperty="ScaleY"
+                                                         From="0.75" To="1.15" Duration="0:0:0.85"
+                                                         AutoReverse="True" RepeatBehavior="Forever"/>
+                                    </Storyboard></BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                    </Grid>
+
+                    <TextBlock Text="Aplicando correções" FontSize="21" FontWeight="Bold"
+                               Foreground="{DynamicResource Fg0Brush}" HorizontalAlignment="Center"/>
+
+                    <TextBlock Text="{Binding CurrentFixTarget}" FontSize="13.5" Margin="0,8,0,0"
+                               Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
+                               FontFamily="Cascadia Mono, Consolas" TextTrimming="CharacterEllipsis"/>
+
+                    <TextBlock Margin="0,16,0,8" HorizontalAlignment="Center" FontSize="13"
+                               Foreground="{DynamicResource Fg2Brush}">
+                        <Run Text="{Binding FixesDone}" FontWeight="Bold" FontSize="17"
+                             Foreground="{DynamicResource Fg0Brush}"/>
+                        <Run Text="de"/>
+                        <Run Text="{Binding FixesTotal}" FontWeight="Bold"/>
+                        <Run Text="concluídas"/>
+                    </TextBlock>
+
+                    <ProgressBar Width="340" Height="8" Maximum="100"
+                                 Value="{Binding Progress, Mode=OneWay}"/>
+
+                    <TextBlock Text="Não desligue o computador durante este processo."
+                               FontSize="11.5" Margin="0,18,0,14" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource Fg3Brush}"/>
+
+                    <Button Content="Cancelar" Style="{StaticResource DangerButton}"
+                            HorizontalAlignment="Center" Command="{Binding CancelCommand}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -27,7 +27,7 @@ public sealed class PowerShellRunner
     {
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SysMaintenanceHub", ".ps");
+            "Curupira", ".ps");
         Directory.CreateDirectory(dir);
         try
         {

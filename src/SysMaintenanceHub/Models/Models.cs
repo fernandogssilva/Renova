@@ -108,3 +108,65 @@ public sealed class MaintenanceSnapshot
         double s = 0; foreach (var c in list) s += c.SizeMB; return s;
     }
 }
+
+// ============================================================
+// Linha selecionavel da tabela de vulnerabilidades.
+// Permite corrigir varias de uma vez (multi-select + acao em lote).
+// ============================================================
+public sealed class VulnRow : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+{
+    public VulnerabilityItem Item { get; }
+
+    public VulnRow(VulnerabilityItem item) => Item = item;
+
+    private bool _isSelected;
+    public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
+
+    private FixState _state = FixState.Pending;
+    public FixState State
+    {
+        get => _state;
+        set { SetProperty(ref _state, value); OnPropertyChanged(nameof(StateText)); OnPropertyChanged(nameof(StateColor)); }
+    }
+
+    public string StateText => State switch
+    {
+        FixState.Pending   => "",
+        FixState.Queued    => "Na fila",
+        FixState.Applying  => "Aplicando...",
+        FixState.Fixed     => "Corrigido",
+        FixState.Failed    => "Falhou",
+        FixState.Skipped   => "Manual",
+        _ => ""
+    };
+
+    public string StateColor => State switch
+    {
+        FixState.Queued   => "#FBBF24",
+        FixState.Applying => "#34D399",
+        FixState.Fixed    => "#4ADE80",
+        FixState.Failed   => "#F87171",
+        FixState.Skipped  => "#8FB5A2",
+        _ => "#5F8271"
+    };
+
+    // Atalhos de binding
+    public string Cve         => Item.Cve;
+    public string Title       => Item.Title;
+    public string Severity    => Item.Severity;
+    public double CvssScore   => Item.CvssScore;
+    public string Kb          => Item.Kb;
+    public string MsrcUrl     => Item.MsrcUrl;
+    public string CatalogUrl  => Item.CatalogUrl;
+    public DateTime ReleaseDate => Item.ReleaseDate;
+
+    /// <summary>KBs reais (KBxxxxxxx) podem ser aplicadas automaticamente.
+    /// Findings locais trazem cmdlet/registry no campo Kb e sao manuais.</summary>
+    public bool IsAutoFixable =>
+        System.Text.RegularExpressions.Regex.IsMatch(Item.Kb ?? "", @"^KB\d{5,8}$",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    public bool IsLocalFinding => Item.Cve.StartsWith("SEC-", StringComparison.OrdinalIgnoreCase);
+}
+
+public enum FixState { Pending, Queued, Applying, Fixed, Failed, Skipped }
