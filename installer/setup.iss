@@ -49,9 +49,9 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 Name: "startupentry";    Description: "Executar {#AppName} no login do Windows"; GroupDescription: "Integração"; Flags: unchecked
 
 [Files]
-; Publique com "scripts\publish.ps1" antes — a saída fica em src\SysMaintenanceHub\bin\publish\
-Source: "..\src\SysMaintenanceHub\bin\publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\src\SysMaintenanceHub\bin\publish\*";              DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Publique com "scripts\publish.ps1" antes — a saída fica em src\Curupira\bin\publish\
+Source: "..\src\Curupira\bin\publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\Curupira\bin\publish\*";              DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\README.md";                                        DestDir: "{app}"; Flags: ignoreversion
 Source: "..\docs\*";                                           DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 

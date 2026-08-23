@@ -7,9 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using Serilog;
-using SysMaintenanceHub.Models;
+using Curupira.Models;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 /// <summary>
 /// Consulta a página oficial de release-health da Microsoft e compara com a
@@ -38,7 +38,7 @@ public sealed class MicrosoftCatalogService
             Timeout = TimeSpan.FromSeconds(20)
         };
         c.DefaultRequestHeaders.Add("User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SysMaintenanceHub/1.1");
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Curupira/1.1");
         c.DefaultRequestHeaders.Add("Accept",
             "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         return c;

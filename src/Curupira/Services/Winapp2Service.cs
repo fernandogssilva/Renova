@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 /// <summary>
 /// Motor de limpeza baseado no winapp2.ini — base comunitária com milhares de

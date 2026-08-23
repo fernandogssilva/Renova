@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace SysMaintenanceHub.Converters;
+namespace Curupira.Converters;
 
 public sealed class BoolToVisibilityConverter : IValueConverter
 {

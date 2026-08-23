@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 /// <summary>
 /// Uma entrada do winapp2.ini — corresponde a um alvo de limpeza de um

@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>false</UseWindowsForms>
 
-    <RootNamespace>SysMaintenanceHub</RootNamespace>
+    <RootNamespace>Curupira</RootNamespace>
     <AssemblyName>Curupira</AssemblyName>
     <ApplicationIcon>Assets\Curupira.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

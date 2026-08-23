@@ -20,7 +20,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-set "SRC=%~dp0src\SysMaintenanceHub\bin\publish"
+set "SRC=%~dp0src\Curupira\bin\publish"
 set "DST=%ProgramFiles%\Curupira"
 
 if not exist "%SRC%\Curupira.exe" (

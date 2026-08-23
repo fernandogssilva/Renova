@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root      = Split-Path -Parent $PSScriptRoot
-$publish   = Join-Path $root 'src\SysMaintenanceHub\bin\publish'
+$publish   = Join-Path $root 'src\Curupira\bin\publish'
 $exeName   = 'Curupira.exe'
 
 if (-not (Test-Path (Join-Path $publish $exeName))) {

@@ -7,10 +7,10 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Serilog;
-using SysMaintenanceHub.Models;
-using SysMaintenanceHub.Services;
+using Curupira.Models;
+using Curupira.Services;
 
-namespace SysMaintenanceHub.ViewModels;
+namespace Curupira.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
@@ -45,7 +45,7 @@ public partial class MainViewModel : ObservableObject
         _registry = new RegistryAuditService();
         Winapp2DatabaseStatus = _winapp2.DatabaseExists
             ? $"Base carregada ({_winapp2.DatabaseDate:dd/MM/yyyy})"
-            : "Base ainda nao baixada";
+            : "Base ainda não baixada";
 
         AppTheme = ThemeManager.Current == Services.AppTheme.Dark ? "Dark" : "Light";
         LastCleanupText = FormatLastCleanup(_cleanup.LastCleanup());
@@ -123,7 +123,7 @@ public partial class MainViewModel : ObservableObject
 
     // ================= WINAPP2 (regras da comunidade) =================
     public ObservableCollection<Winapp2Result> Winapp2Results { get; } = new();
-    [ObservableProperty] private string _winapp2DatabaseStatus = "Base ainda nao baixada";
+    [ObservableProperty] private string _winapp2DatabaseStatus = "Base ainda não baixada";
     [ObservableProperty] private double _winapp2TotalMB;
     [ObservableProperty] private int _winapp2SelectedCount;
     [ObservableProperty] private string _winapp2Status = "Nenhuma varredura executada";
@@ -131,7 +131,7 @@ public partial class MainViewModel : ObservableObject
     // ================= REGISTRO =================
     public ObservableCollection<RegistryFinding> RegistryFindings { get; } = new();
     [ObservableProperty] private int _registrySelectedCount;
-    [ObservableProperty] private string _registryStatus = "Nenhuma analise executada";
+    [ObservableProperty] private string _registryStatus = "Nenhuma análise executada";
     [ObservableProperty] private string _lastRegistryBackup = "";
 
     [ObservableProperty] private int _healthScore = 100;
@@ -997,10 +997,10 @@ public partial class MainViewModel : ObservableObject
                 Winapp2TotalMB = Math.Round(results.Sum(r => r.SizeMB), 1);
                 Winapp2SelectedCount = results.Count(r => r.IsSelected);
                 Winapp2Status = results.Count == 0
-                    ? "Nenhum residuo encontrado pelas regras da comunidade."
-                    : $"{results.Count} alvos - {Winapp2TotalMB:N1} MB recuperaveis";
+                    ? "Nenhum resíduo encontrado pelas regras da comunidade."
+                    : $"{results.Count} alvos - {Winapp2TotalMB:N1} MB recuperáveis";
             });
-            ReportDone(mod, results.Count, $"{Winapp2TotalMB:N1} MB recuperaveis por regras da comunidade");
+            ReportDone(mod, results.Count, $"{Winapp2TotalMB:N1} MB recuperáveis por regras da comunidade");
             SetProgress(100, Winapp2Status);
         }
         catch (OperationCanceledException) { StatusText = "Cancelado."; }
@@ -1068,8 +1068,8 @@ public partial class MainViewModel : ObservableObject
                 RegistrySelectedCount = findings.Count(f => f.IsSelected);
                 var sec = findings.Count(f => f.Severity == 3);
                 RegistryStatus = findings.Count == 0
-                    ? "Nenhuma entrada orfa encontrada."
-                    : $"{findings.Count} entrada(s) orfa(s)" + (sec > 0 ? $" - {sec} relevante(s) para seguranca" : "");
+                    ? "Nenhuma entrada órfã encontrada."
+                    : $"{findings.Count} entrada(s) órfã(s)" + (sec > 0 ? $" - {sec} relevante(s) para segurança" : "");
             });
             ReportDone(mod, findings.Count, RegistryStatus);
             SetProgress(100, RegistryStatus);

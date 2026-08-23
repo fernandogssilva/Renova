@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Windows;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 public enum AppTheme { Dark, Light }
 

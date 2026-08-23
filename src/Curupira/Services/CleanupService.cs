@@ -4,9 +4,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
-using SysMaintenanceHub.Models;
+using Curupira.Models;
 
-namespace SysMaintenanceHub.Services;
+namespace Curupira.Services;
 
 public sealed class CleanupService
 {

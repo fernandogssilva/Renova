@@ -1,4 +1,4 @@
-# Roadmap de Produto — SysMaintenanceHub
+# Roadmap de Produto — Curupira
 
 **Framework:** RICE (Reach · Impact · Confidence · Effort)
 **Data:** julho/2026
