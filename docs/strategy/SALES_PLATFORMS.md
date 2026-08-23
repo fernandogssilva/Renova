@@ -1,4 +1,4 @@
-# Plataformas de venda — Wintal (produto digital B2C low-ticket)
+# Plataformas de venda — Curupira (produto digital B2C low-ticket)
 
 **Escopo:** produto digital baixável (EXE Windows), ticket R$ 47–197, público majoritariamente Brasil.
 **Data:** julho/2026
@@ -67,7 +67,7 @@
 2. **Ativação no app**
    - Usuário cola a chave na tela de ativação
    - App valida assinatura localmente (sem servidor no MVP)
-   - Grava chave hasheada em `%LOCALAPPDATA%\Wintal\license.dat`
+   - Grava chave hasheada em `%LOCALAPPDATA%\Curupira\license.dat`
 
 3. **Anti-piracy leve**
    - Hash da máquina (CPU + placa-mãe) + chave = identidade única
@@ -95,9 +95,9 @@ Diferença Kiwify vs Hotmart em 500 vendas anuais = **R$ 1.150 líquidos a mais*
 
 ## Setup em 1 dia (roteiro prático)
 
-1. **Kiwify** (2h): criar conta, cadastrar produto "Wintal Pessoal - Licença Vitalícia", subir imagem/copy, configurar checkout, testar compra em modo sandbox
+1. **Kiwify** (2h): criar conta, cadastrar produto "Curupira Pessoal - Licença Vitalícia", subir imagem/copy, configurar checkout, testar compra em modo sandbox
 2. **Webhook + gerador de chave** (3h): Cloudflare Worker + secret, testar
-3. **Template de e-mail** (30min): "Bem-vindo ao Wintal — sua chave é XXXX. Baixe em: link. Manual: link."
+3. **Template de e-mail** (30min): "Bem-vindo ao Curupira — sua chave é XXXX. Baixe em: link. Manual: link."
 4. **Landing page** (4h): Framer/Astro/Cardpress + copy da GO_TO_MARKET + botão CTA → Kiwify
 5. **Lançamento soft**: post LinkedIn + envio para 10 amigos técnicos
 
