@@ -1,322 +1,178 @@
-# Curupira
+<div align="center">
 
-Dashboard visual para manutenção e atualização do Windows — construído em **WPF / .NET 8**, com temas dark/light, execução silenciosa (sem prompts intermediários) e logs em tempo real.
+<img src="docs/brand/curupira-logo.svg" alt="Curupira" width="560">
 
-> Interface reativa, MVVM, single-file executable. Toda ação decidida pelo usuário no painel; a partir daí o app roda sem perguntar mais nada.
+**Manutenção, desempenho e segurança para Windows**
+
+[![Release](https://img.shields.io/github/v/release/fernandogssilva/Curupira?style=flat-square&color=10B981)](https://github.com/fernandogssilva/Curupira/releases)
+[![Plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0A1410?style=flat-square)](#requisitos)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-FB923C?style=flat-square)](LICENSE)
+
+</div>
 
 ---
 
-## Sumário
+> No folclore brasileiro, o Curupira guarda a mata com os pés virados ao contrário — quem tenta seguir suas pegadas caminha para o lado errado e se perde. É o nome certo para uma ferramenta que protege o que é seu.
 
-- [Recursos](#recursos)
-- [Screenshots do dashboard](#screenshots-do-dashboard)
-- [Como rodar (3 opções)](#como-rodar-3-opções)
-- [Requisitos](#requisitos)
-- [Instalação](#instalação)
-- [Estrutura do projeto](#estrutura-do-projeto)
-- [Módulos e o que cada um faz](#módulos-e-o-que-cada-um-faz)
-- [Compilar do código-fonte](#compilar-do-código-fonte)
-- [Onde ficam os logs e a configuração](#onde-ficam-os-logs-e-a-configuração)
-- [Solução de problemas](#solução-de-problemas)
-- [Roadmap](#roadmap)
-- [Licença](#licença)
+---
+
+## O que é
+
+Um painel único que faz o que hoje exige quatro telas diferentes do Windows: verificar vulnerabilidades, instalar atualizações, limpar disco, liberar memória e auditar configurações de segurança.
+
+Sem bundleware, sem telemetria, sem "seu PC está em risco crítico, compre agora".
+
+---
+
+## Mapa de funções
+
+![Mapa de funções](docs/images/mapa-de-funcoes.svg)
+
+---
+
+## Painel principal
+
+Cada área responde três perguntas: **o que foi encontrado**, **o que aquilo é** e **o que melhora no computador** depois de resolver.
+
+![Painel](docs/images/painel.svg)
+
+---
+
+## Correção de vulnerabilidades em lote
+
+Marque várias e corrija de uma vez. Cada linha mostra seu próprio estado enquanto a fila avança.
+
+![Vulnerabilidades](docs/images/vulnerabilidades.svg)
 
 ---
 
 ## Recursos
 
-| Recurso | Detalhes |
-|---|---|
-| **Windows Update** | Lista KBs pendentes (via `PSWindowsUpdate`) e destaca os de segurança. Instala com `-AcceptAll -Confirm:$false` — sem prompts. |
-| **Winget** | `winget upgrade --all --silent --accept-source-agreements --accept-package-agreements` |
-| **Limpeza de disco** | TEMP, Prefetch, Windows Update, caches de dev (npm/pip/NuGet/Go/Yarn), caches de navegador (Brave/Chrome/Edge) + `cleanmgr /sagerun` com todos os presets ativados. |
-| **Desfragmentação / TRIM** | `Optimize-Volume -Analyze` para relatório e `-Defrag` para executar. |
-| **Startup Apps** | Lê registros `HKCU/HKLM Run` + `StartupApproved`, mostra ativos vs. desativados, permite alternar. |
-| **Logs** | UI ao vivo (aba **Logs**) + arquivo Serilog rotativo diário. |
-| **Tema Dark / Light** | Alterna e persiste em `%LOCALAPPDATA%\Curupira\theme.cfg`. |
-| **Auto-elevação** | Manifesto `requireAdministrator` — UAC único no início. |
+| Área | Módulo | O que faz |
+|---|---|---|
+| **Segurança** | Vulnerabilidades | CVEs da MSRC cruzados com os patches instalados · correção em lote |
+| | Auditoria local | 12 verificações: Defender, Firewall, BitLocker, LSA, SMBv1, RDP/NLA, Secure Boot, TPM… |
+| | Windows Update | Instalação silenciosa via PSWindowsUpdate |
+| | Catálogo Microsoft | Compara sua build com o release-health oficial |
+| **Limpeza** | Limpeza de disco | TEMP, caches de navegador e de desenvolvimento, Windows Update, `cleanmgr` |
+| | Regras da comunidade | Motor **winapp2.ini** — milhares de regras que o CCleaner 7 abandonou |
+| | Registro | 7 categorias de órfãos · **backup `.reg` obrigatório** antes de remover |
+| **Desempenho** | Memória RAM | Compacta working sets e descarta a standby list |
+| | Apps na memória | Lista por consumo · compactar sem fechar ou encerrar |
+| | Discos | Desfragmentação em HDD, TRIM em SSD |
+| | Inicialização | Programas que sobem com o Windows |
+| **Sistema** | Varredura ao vivo | Cada módulo mostrando o que analisa em tempo real |
+| | Logs | Em tela e em arquivo, rotação diária |
 
----
-
-## Screenshots do dashboard
-
-O dashboard mostra 6 cartões-KPI acima e uma área com abas:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│ ⚡ Curupira                            [Executar tudo] [Tema] │
-│    Pronto.                                              ┌─────────────┐│
-│ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░ 62%          │             ││
-├─────────────────────────────────────────────────────────┴─────────────┤│
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    ││
-│ │ Windows  │ │ Segurança│ │ Apps     │ │ Limpeza  │ │ Startup  │    ││
-│ │ Update   │ │          │ │ (winget) │ │ estimada │ │          │    ││
-│ │   12     │ │    4     │ │   23     │ │ 8.4 GB   │ │   17     │    ││
-│ └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘    ││
-├───────────────────────────────────────────────────────────────────────┤│
-│ [Windows Update] [Apps (winget)] [Limpeza] [Startup] [Discos] [Logs]  ││
-│                                                                        ││
-│  KB       Título                        Categoria    Tamanho          ││
-│  KB5051987 2026-06 Cumulative Update... Security     342.5 MB          ││
-│  ...                                                                   ││
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Como rodar (3 opções)
-
-O projeto entrega **três formas** de rodar, dependendo da sua preferência:
-
-### 1. Duplo clique — `Curupira.bat`
-Wrapper batch com auto-elevação (UAC). Localiza o EXE em `bin\publish\` ou em `%ProgramFiles%`.
-
-```
-Duplo clique em Curupira.bat
-```
-
-### 2. PowerShell — `Curupira.ps1`
-Mesmo comportamento, mas com opção `-Build` para compilar antes:
-
-```powershell
-.\Curupira.ps1                  # roda o EXE existente
-.\Curupira.ps1 -Build           # publica primeiro e depois roda
-```
-
-### 3. EXE direto — `Curupira.exe`
-Após publicar, o executável fica em:
-```
-src\Curupira\bin\publish\Curupira.exe
-```
-Duplo clique dispara UAC automaticamente.
-
----
-
-## Requisitos
-
-- **Windows 10 20H1+ ou Windows 11**
-- Se rodar o EXE `-SelfContained`: **nenhum runtime extra** (já vem embutido, ~75 MB)
-- Se rodar framework-dependent: **.NET 8 Desktop Runtime** ([download](https://dotnet.microsoft.com/download/dotnet/8.0))
-- **PowerShell 5.1+** (nativo no Windows)
-- **Winget** (nativo no Windows 11, instalável via Microsoft Store no Windows 10)
-- Módulo **PSWindowsUpdate** — instalado automaticamente na primeira execução (requer internet)
+📖 **[Documentação completa de cada função](docs/FUNCIONALIDADES.md)**
 
 ---
 
 ## Instalação
 
-### Opção A — Instalador Inno Setup (recomendado para distribuir)
+### Opção 1 — Baixar o executável
 
-Requer [Inno Setup 6](https://jrsoftware.org/isdl.php) instalado.
+Baixe o `Curupira.exe` na [página de releases](https://github.com/fernandogssilva/Curupira/releases). É self-contained: **não precisa instalar o .NET**.
+
+Confira o hash antes de executar:
 
 ```powershell
-# 1. Publique o EXE self-contained
-.\scripts\publish.ps1 -SelfContained
-
-# 2. Compile o instalador
-& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\setup.iss
-
-# 3. Distribua o setup gerado
-# installer\output\Curupira-Setup-1.0.0.exe
+Get-FileHash Curupira.exe -Algorithm SHA256
 ```
 
-O instalador oferece:
-- Escolha do diretório (`%ProgramFiles%\Curupira` por padrão)
-- Ícone no menu iniciar / desktop (opcional)
-- Iniciar no login do Windows (opcional)
-- Registro em **Adicionar/Remover Programas**
-- Desinstalador com limpeza do `%LOCALAPPDATA%\Curupira`
-
-### Opção B — Instalação sem Inno (PowerShell)
+### Opção 2 — Instalar com atalhos
 
 ```powershell
-# como Administrador
+# PowerShell como Administrador
 .\scripts\install-local.ps1
 ```
 
-Faz o mesmo trabalho: copia para `%ProgramFiles%\Curupira`, cria atalho e registra a desinstalação.
+Copia para `%ProgramFiles%\Curupira`, cria atalhos no Desktop e no Menu Iniciar, e registra em Adicionar/Remover Programas.
 
-### Opção C — Portable (sem instalar)
+### Opção 3 — Compilar do código
 
-Basta rodar o `Curupira.exe` diretamente da pasta `bin\publish\`. Nada é gravado fora de `%LOCALAPPDATA%\Curupira\`.
+```powershell
+git clone https://github.com/fernandogssilva/Curupira.git
+cd Curupira
+.\scripts\publish.ps1 -SelfContained
+```
+
+O executável sai em `src\Curupira\bin\publish\Curupira.exe`.
 
 ---
 
-## Estrutura do projeto
+## Requisitos
+
+- Windows 10 20H1+ ou Windows 11 · x64
+- Executar como Administrador (o app solicita UAC sozinho)
+- PowerShell 5.1+ e Winget (nativos no Windows 11)
+- Módulo `PSWindowsUpdate` — instalado na primeira execução
+
+---
+
+## Privacidade
+
+Nenhum dado sai da sua máquina. As únicas chamadas de rede são a fontes públicas:
+
+| Destino | Para quê |
+|---|---|
+| `api.msrc.microsoft.com` | CVEs publicadas pela Microsoft |
+| `learn.microsoft.com` | Build mais recente do Windows |
+| `raw.githubusercontent.com` | Base winapp2.ini (opcional) |
+
+Sem analytics, sem crash reports, sem identificador de máquina. Logs ficam apenas em `%LOCALAPPDATA%\Curupira\logs\`.
+
+---
+
+## O que o Curupira deliberadamente não faz
+
+| Não faz | Por quê |
+|---|---|
+| Limpeza de CLSID em massa, fontes ou Shared DLLs | É onde os "otimizadores" quebram instalações |
+| "Secure delete" multi-passe | Em SSD com wear leveling não garante nada |
+| Prometer velocidade ao limpar registro | Não existe ganho mensurável — e o app diz isso na tela |
+| Telemetria ou bundleware | — |
+
+---
+
+## Estrutura
 
 ```
 Curupira/
 ├── Curupira.sln
-├── Curupira.bat            # launcher .bat
-├── Curupira.ps1            # launcher .ps1
-├── README.md                        # este manual
-├── .gitignore
+├── Curupira.bat · Curupira.ps1     launchers com auto-elevação
+├── update.bat                       atualizador de 1 clique
 │
 ├── src/Curupira/
-│   ├── Curupira.csproj     # .NET 8 WPF, single-file, publish self-contained
-│   ├── app.manifest                 # UAC requireAdministrator + PerMonitorV2
-│   ├── App.xaml(.cs)                # bootstrap Serilog + tema
-│   ├── MainWindow.xaml(.cs)         # dashboard
-│   │
-│   ├── Themes/
-│   │   ├── DarkTheme.xaml
-│   │   ├── LightTheme.xaml
-│   │   └── Common.xaml              # cards, botões, progress bar
-│   │
-│   ├── ViewModels/
-│   │   └── MainViewModel.cs         # ObservableProperty + RelayCommand
-│   │
-│   ├── Services/
-│   │   ├── PowerShellRunner.cs      # exec PS com stream de stdout
-│   │   ├── WindowsUpdateService.cs  # PSWindowsUpdate silencioso
-│   │   ├── WingetService.cs         # winget upgrade
-│   │   ├── CleanupService.cs        # TEMP + caches + cleanmgr
-│   │   ├── DefragService.cs         # Optimize-Volume
-│   │   ├── StartupAppsService.cs    # Registry Run + StartupApproved
-│   │   ├── ThemeManager.cs          # Dark/Light persistente
-│   │   └── AdminGuard.cs
-│   │
-│   ├── Models/Models.cs             # records para os dados exibidos
-│   ├── Converters/Converters.cs     # BoolToVisibility, MB→GB, etc.
-│   └── Assets/                      # ícones e imagens
+│   ├── Services/                    15 serviços (um por módulo)
+│   ├── ViewModels/MainViewModel.cs  MVVM
+│   ├── Themes/                      claro, escuro e estilos comuns
+│   ├── Models/ · Converters/
+│   └── Assets/Curupira.ico
 │
-├── installer/
-│   └── setup.iss                    # Inno Setup 6 (PT-BR + EN)
-│
-├── scripts/
-│   ├── publish.ps1                  # dotnet publish (framework/self-contained)
-│   └── install-local.ps1            # instalador PowerShell alternativo
-│
+├── installer/setup.iss              Inno Setup 6
+├── scripts/                         publish · install · build-icon
 └── docs/
+    ├── FUNCIONALIDADES.md
+    ├── brand/ · images/
+    ├── legal/EULA.md
+    ├── security/SECURITY_AUDIT.md
+    └── strategy/
 ```
 
 ---
 
-## Módulos e o que cada um faz
+## Aviso
 
-### 1. Windows Update (`WindowsUpdateService.cs`)
-- Garante instalação silenciosa do módulo `PSWindowsUpdate` na primeira execução.
-- `Get-WindowsUpdate -MicrosoftUpdate` para listar (KB, título, categoria, tamanho).
-- `Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -Confirm:$false` para instalar tudo.
-- Sem popup, sem "y/n". Deixa o usuário decidir sobre reboot depois.
+O Curupira executa operações administrativas: instala atualizações, **remove arquivos permanentemente** e altera o registro. Mantenha backups. Leia o [EULA](docs/legal/EULA.md) antes de usar.
 
-### 2. Aplicativos (`WingetService.cs`)
-- `winget upgrade` com parser regex do output tabular do winget.
-- `winget upgrade --all --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --include-unknown` para atualizar tudo.
-
-### 3. Limpeza (`CleanupService.cs`)
-Enumera automaticamente estes alvos (se existirem):
-- User `%TEMP%`, `C:\Windows\Temp`, `C:\Windows\Prefetch`
-- `C:\Windows\SoftwareDistribution\Download`, `C:\Windows.old`
-- Cache do Brave, Chrome, Edge
-- `%USERPROFILE%\.nuget`, `%LOCALAPPDATA%\npm-cache`, `%LOCALAPPDATA%\pip\Cache`, `%USERPROFILE%\go\pkg`
-- Delivery Optimization Cache
-
-Depois roda `cleanmgr /sagerun:99` com **26 presets** ativados (Update Cleanup, Delivery Optimization Files, Windows Defender, etc.).
-
-Grava data da última limpeza em `%LOCALAPPDATA%\Curupira\last_cleanup.txt`.
-
-### 4. Discos (`DefragService.cs`)
-- Para cada drive fixo, roda `Optimize-Volume -DriveLetter X -Analyze` e extrai o `% fragmentado`.
-- `Optimize-Volume -Defrag` para HDD tradicional; SSDs recebem TRIM (comportamento nativo do cmdlet).
-- Lê data do último defrag do registro `HKLM\SOFTWARE\Microsoft\Dfrg\Statistics`.
-
-### 5. Startup Apps (`StartupAppsService.cs`)
-- Enumera 5 chaves do registro: HKCU/HKLM `Run` e `RunOnce`, incluindo `WOW6432Node`.
-- Cruza com `Explorer\StartupApproved\Run` para descobrir quais estão ativos.
-- Botão **Alternar** grava byte 0x02 (ativo) ou 0x03 (desativo) sem precisar `regedit`.
-
-### 6. Logs (`Serilog` + `App.xaml.cs`)
-- Console + arquivo rotativo diário (14 dias de retenção).
-- Arquivo em `%LOCALAPPDATA%\Curupira\logs\app-YYYYMMDD.log`.
-- Formato: `[timestamp INF] SourceContext :: mensagem`.
-- Captura exceções não tratadas do AppDomain e do dispatcher WPF.
-- UI: aba **Logs** com auto-scroll, mantém últimas 2.000 linhas em memória.
-
-### 7. Tema (`ThemeManager.cs`)
-- Dark é o default. Alternar via botão 🌓 no header.
-- Cores em `DarkTheme.xaml` / `LightTheme.xaml` (paleta Tailwind-like).
-- Persiste em `%LOCALAPPDATA%\Curupira\theme.cfg`.
+O binário ainda **não é assinado**, então o Windows exibe *Fornecedor: Desconhecido* no UAC. Compare o SHA-256 publicado em cada release.
 
 ---
 
-## Compilar do código-fonte
+<div align="center">
 
-```powershell
-# clone
-git clone https://github.com/fernandogssilva/Curupira.git
-cd Curupira
+MIT © 2026 [Fernando Silva](https://github.com/fernandogssilva) · DataSec
 
-# restore + build
-dotnet restore
-dotnet build -c Release
-
-# publish (opção A: EXE portátil, sem dependência)
-.\scripts\publish.ps1 -SelfContained
-# saída: src\Curupira\bin\publish\Curupira.exe  (~75 MB)
-
-# publish (opção B: menor, precisa .NET 8 Desktop Runtime no destino)
-.\scripts\publish.ps1
-# saída: src\Curupira\bin\publish\Curupira.exe  (~10 MB)
-```
-
----
-
-## Onde ficam os logs e a configuração
-
-Tudo em `%LOCALAPPDATA%\Curupira\`:
-
-```
-%LOCALAPPDATA%\Curupira\
-├── logs\
-│   ├── app-20260718.log
-│   ├── app-20260717.log
-│   └── ...
-├── theme.cfg               # "Dark" ou "Light"
-└── last_cleanup.txt        # ISO-8601 da última limpeza executada
-```
-
-**Nada é gravado fora dessa pasta.** Desinstalar remove tudo.
-
----
-
-## Solução de problemas
-
-### O EXE abre e fecha na hora
-Provavelmente falha do .NET Desktop Runtime (se usou publish framework-dependent). Verifique:
-```powershell
-dotnet --list-runtimes | Select-String "WindowsDesktop.App 8"
-```
-Instale o [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) ou use `.\scripts\publish.ps1 -SelfContained`.
-
-### "PSWindowsUpdate não pôde ser instalado"
-Verifique conexão + permissão. Instale manualmente uma vez:
-```powershell
-Install-Module PSWindowsUpdate -Force -AllowClobber -Scope AllUsers
-```
-
-### "winget não é reconhecido como comando"
-Instale o **App Installer** pela Microsoft Store, ou baixe o `.msixbundle` do [github/microsoft/winget-cli/releases](https://github.com/microsoft/winget-cli/releases).
-
-### Fragmentação sempre 0%
-No Windows moderno, SSDs reportam 0% e recebem TRIM automaticamente — é o comportamento correto. HDDs vão mostrar valores reais.
-
-### Aba Startup não mostra tudo
-Apps modernos (Store apps, tarefas agendadas de startup) não usam Registry `Run`. Para inspeção completa, cruze com **Task Scheduler** e `shell:startup`.
-
----
-
-## Roadmap
-
-- [ ] Ícone `.ico` customizado
-- [ ] Gráfico histórico de espaço em disco (LiveCharts)
-- [ ] Suporte a tarefas agendadas do Task Scheduler no Startup Apps
-- [ ] Exportar relatório em HTML/PDF
-- [ ] Notificações do Windows quando updates críticos aparecerem
-- [ ] Assinatura de código para distribuição corporativa
-
----
-
-## Licença
-
-MIT © 2026 [Fernando Silva](https://github.com/fernandogssilva) / DataSec
+</div>
