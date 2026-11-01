@@ -1,9 +1,9 @@
 # CONTRATO DE LICENÇA DE USUÁRIO FINAL (EULA)
 ## Renova
 
-**Última atualização:** 18 de julho de 2026
+**Última atualização:** 1º de novembro de 2026
 **Licenciante:** CyberThrust — Fernando Silva
-**Contato:** fernandogssilva@gmail.com
+**Contato:** https://github.com/fernandogssilva/Renova/issues
 
 Ao instalar, copiar, baixar, acessar ou de outra forma utilizar o Renova ("**Software**"), você ("**Usuário**") concorda em ficar vinculado pelos termos deste Contrato de Licença de Usuário Final ("**EULA**"). Se você não concordar com os termos, **não instale, não execute e desinstale o Software imediatamente**.
 

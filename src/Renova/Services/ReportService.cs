@@ -299,112 +299,76 @@ public sealed class ReportService
         catch (Exception ex) { _log.Warning(ex, "Falha ao abrir {Path}", path); }
     }
 
-    // ================= ENVIO POR E-MAIL =================
+    // ================= PUBLICACAO NO GITHUB =================
 
-    /// <summary>Destino dos reports.</summary>
-    public string DestinationEmail { get; set; } = "fernandogssilva@gmail.com";
+    /// <summary>Pagina de novo issue do repositorio publico do Renova.</summary>
+    public const string IssuesUrl = "https://github.com/fernandogssilva/Renova/issues/new";
 
     /// <summary>
-    /// Abre um rascunho de e-mail ja preenchido com o report.
+    /// Abre no navegador um issue do GitHub ja preenchido com o report.
     ///
-    /// NUNCA envia sozinho, e NAO embute credenciais SMTP. Credencial dentro
-    /// de executavel distribuido e extraivel por qualquer um - viraria um
-    /// relay de spam com a conta do autor. O usuario revisa e clica enviar.
-    ///
-    /// Ordem de tentativa:
-    ///   1. Outlook via late binding - anexa o .zip automaticamente
-    ///   2. mailto: - abre o cliente padrao; o anexo o usuario arrasta,
-    ///      porque o protocolo mailto nao permite anexo por seguranca
+    /// NUNCA publica sozinho e nao usa token: o usuario revisa, anexa o .zip
+    /// e clica em "Submit". O issue e PUBLICO - o texto ja vem sanitizado,
+    /// mas imagens nao passam por mascaramento e precisam ser revisadas.
+    /// O GitHub nao aceita anexo por URL, entao o Explorer abre com o .zip
+    /// selecionado e o caminho vai para a area de transferencia.
     /// </summary>
-    public EmailResult PrepareEmail(ReportInput input, ReportResult report, Action<string>? onLine)
+    public IssueResult OpenGitHubIssue(ReportInput input, ReportResult report, Action<string>? onLine)
     {
-        var assunto = $"[Renova] {input.Severity} - {input.Module} - {Sanitize(input.Title)}";
+        var titulo = $"[{input.Severity}] {input.Module} - {Sanitize(input.Title)}";
 
         var corpo = new StringBuilder();
-        corpo.AppendLine("Report de falha gerado pelo Renova.");
+        corpo.AppendLine($"**Modulo:** {input.Module}  ");
+        corpo.AppendLine($"**Severidade:** {input.Severity}  ");
+        corpo.AppendLine($"**Reproduz:** {(input.Reproducible ? "sempre" : "aconteceu uma vez")}  ");
+        corpo.AppendLine($"**Versao:** {typeof(App).Assembly.GetName().Version}");
         corpo.AppendLine();
-        corpo.AppendLine($"Modulo:      {input.Module}");
-        corpo.AppendLine($"Severidade:  {input.Severity}");
-        corpo.AppendLine($"Reproduz:    {(input.Reproducible ? "sempre" : "aconteceu uma vez")}");
-        corpo.AppendLine($"Imagens:     {input.Attachments.Count}");
-        corpo.AppendLine($"Versao:      {typeof(App).Assembly.GetName().Version}");
-        corpo.AppendLine();
-        corpo.AppendLine("--- O que aconteceu ---");
+        corpo.AppendLine("### O que aconteceu");
         corpo.AppendLine(Sanitize(input.Description.Trim()));
         if (!string.IsNullOrWhiteSpace(input.StepsToReproduce))
         {
             corpo.AppendLine();
-            corpo.AppendLine("--- Passos para reproduzir ---");
+            corpo.AppendLine("### Passos para reproduzir");
             corpo.AppendLine(Sanitize(input.StepsToReproduce.Trim()));
         }
         corpo.AppendLine();
-        corpo.AppendLine("O pacote completo (imagens + diagnostico + log) esta anexado.");
+        corpo.AppendLine("### Pacote de diagnostico");
+        corpo.AppendLine("_Arraste aqui o .zip gerado pelo Renova (imagens, diagnostico e log sanitizados)._");
 
         var anexo = !string.IsNullOrEmpty(report.ZipPath) && File.Exists(report.ZipPath)
             ? report.ZipPath : "";
 
-        // ---- 1. Outlook ----
         try
         {
-            var tipo = Type.GetTypeFromProgID("Outlook.Application");
-            if (tipo is not null)
-            {
-                dynamic? app = Activator.CreateInstance(tipo);
-                if (app is not null)
-                {
-                    dynamic mail = app.CreateItem(0); // olMailItem
-                    mail.To = DestinationEmail;
-                    mail.Subject = assunto;
-                    mail.Body = corpo.ToString();
-                    if (anexo.Length > 0) mail.Attachments.Add(anexo);
-                    mail.Display(false); // rascunho aberto, NAO enviado
-                    onLine?.Invoke("Rascunho aberto no Outlook com o pacote anexado. Revise e envie.");
-                    _log.Information("Rascunho de report criado no Outlook");
-                    return new EmailResult(true, "outlook", true, "");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _log.Debug(ex, "Outlook indisponivel, caindo para mailto");
-        }
+            // URL longa demais e recusada pelo GitHub; o pacote completo vai no anexo
+            var texto = corpo.ToString();
+            if (texto.Length > 3000) texto = texto[..3000] + "\n\n[...] ver o pacote anexado.";
 
-        // ---- 2. mailto ----
-        try
-        {
-            // mailto tem limite pratico de tamanho; corpo enxuto
-            var resumo = corpo.ToString();
-            if (resumo.Length > 1600) resumo = resumo[..1600] + "\n\n[...] ver o anexo para o conteudo completo.";
-
-            var url = $"mailto:{Uri.EscapeDataString(DestinationEmail)}" +
-                      $"?subject={Uri.EscapeDataString(assunto)}" +
-                      $"&body={Uri.EscapeDataString(resumo)}";
-
+            var url = $"{IssuesUrl}?title={Uri.EscapeDataString(titulo)}&body={Uri.EscapeDataString(texto)}";
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
             if (anexo.Length > 0)
             {
                 try { System.Windows.Clipboard.SetText(anexo); } catch { }
                 OpenFolder(anexo);
-                onLine?.Invoke("Cliente de e-mail aberto. O anexo NAO pode ser adicionado automaticamente por " +
-                               "restricao do protocolo mailto - arraste o .zip que abrimos no Explorer. " +
-                               "O caminho tambem foi copiado para a area de transferencia.");
             }
-            _log.Information("Rascunho de report aberto via mailto");
-            return new EmailResult(true, "mailto", false, "");
+            onLine?.Invoke("Issue aberto no navegador. Arraste o .zip selecionado no Explorer para o campo de texto, " +
+                           "revise as imagens (o issue e publico) e clique em Submit.");
+            _log.Information("Issue de report aberto no GitHub");
+            return new IssueResult(true, "");
         }
         catch (Exception ex)
         {
-            _log.Warning(ex, "Falha ao abrir cliente de e-mail");
-            return new EmailResult(false, "", false,
-                $"Nao foi possivel abrir o cliente de e-mail: {ex.Message}. " +
-                $"Envie manualmente para {DestinationEmail} anexando {anexo}");
+            _log.Warning(ex, "Falha ao abrir o navegador para o issue");
+            return new IssueResult(false,
+                $"Nao foi possivel abrir o navegador: {ex.Message}. " +
+                $"Abra {IssuesUrl} e anexe {anexo}");
         }
     }
 }
 
-/// <summary>Resultado da preparacao do e-mail.</summary>
-public sealed record EmailResult(bool Success, string Method, bool AttachedAutomatically, string Error);
+/// <summary>Resultado da abertura do issue no GitHub.</summary>
+public sealed record IssueResult(bool Success, string Error);
 
 
 // ================= MODELOS =================

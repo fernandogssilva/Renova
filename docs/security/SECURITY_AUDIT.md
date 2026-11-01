@@ -1,6 +1,6 @@
 # Auditoria de Segurança — Renova v1.2
 
-**Escopo:** binário WPF .NET 8 rodando como Administrador, com integração PowerShell, consultas HTTP externas e escrita em Registry.
+**Escopo:** binário WPF .NET (auditado no .NET 8; hoje .NET 10) rodando como Administrador, com integração PowerShell, consultas HTTP externas e escrita em Registry.
 
 **Data:** 18/07/2026 · **Auditor:** análise interna CyberThrust
 

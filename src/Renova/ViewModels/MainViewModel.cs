@@ -151,6 +151,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _registryStatus = "Nenhuma análise executada";
     [ObservableProperty] private string _lastRegistryBackup = "";
 
+    /// <summary>Versao exibida na tela, lida do assembly (fonte unica: Renova.csproj).</summary>
+    public string VersaoApp { get; } = typeof(App).Assembly.GetName().Version is { } v
+        ? $"{v.Major}.{v.Minor}.{v.Build}" : "";
+    public string RodapeVersao => $"Renova {VersaoApp} · CyberThrust";
+
     // ================= REPORT DE FALHA =================
     public ObservableCollection<ReportAttachment> ReportAttachments { get; } = new();
 
@@ -162,8 +167,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _reportReproducible;
     [ObservableProperty] private string _reportStatus = "";
     [ObservableProperty] private string _lastReportPath = "";
-    [ObservableProperty] private string _reportEmail = "fernandogssilva@gmail.com";
-    [ObservableProperty] private bool _reportSendByEmail = true;
+    [ObservableProperty] private bool _reportOpenIssue = true;
 
     public List<string> ReportModules { get; } = new()
     {
@@ -1442,20 +1446,17 @@ public partial class MainViewModel : ObservableObject
             StatusText = "Report de falha gerado.";
             AppendLog($"Report em: {LastReportPath}");
 
-            if (ReportSendByEmail)
+            if (ReportOpenIssue)
             {
-                _report.DestinationEmail = ReportEmail;
-                var mail = _report.PrepareEmail(input, result, AppendLog);
-                if (mail.Success)
+                var issue = _report.OpenGitHubIssue(input, result, AppendLog);
+                if (issue.Success)
                 {
-                    ReportStatus = mail.AttachedAutomatically
-                        ? $"Rascunho aberto no Outlook para {ReportEmail}, com o pacote ja anexado. Revise e clique em enviar."
-                        : $"Cliente de e-mail aberto para {ReportEmail}. Arraste o .zip que abrimos no Explorer - " +
-                          "o protocolo mailto nao permite anexo automatico. O caminho ja esta na area de transferencia.";
+                    ReportStatus = "Issue aberto no GitHub. Arraste o .zip que abrimos no Explorer para o issue, " +
+                                   "revise as imagens (o issue e publico) e clique em Submit.";
                 }
                 else
                 {
-                    ReportStatus = mail.Error;
+                    ReportStatus = issue.Error;
                     _report.OpenFolder(result.Folder);
                 }
             }
@@ -1488,9 +1489,9 @@ public partial class MainViewModel : ObservableObject
         RefreshReportValidation();
     }
 
-    /// <summary>Reabre o rascunho de e-mail do ultimo pacote gerado.</summary>
+    /// <summary>Reabre o issue no GitHub para o ultimo pacote gerado.</summary>
     [RelayCommand]
-    private void EmailLastReport()
+    private void IssueLastReport()
     {
         if (string.IsNullOrEmpty(LastReportPath))
         {
@@ -1499,7 +1500,6 @@ public partial class MainViewModel : ObservableObject
         }
         try
         {
-            _report.DestinationEmail = ReportEmail;
             var input = new ReportInput
             {
                 Title = string.IsNullOrWhiteSpace(ReportTitle) ? "(sem titulo)" : ReportTitle,
@@ -1511,12 +1511,10 @@ public partial class MainViewModel : ObservableObject
                 Attachments = ReportAttachments.ToList()
             };
             var zip = LastReportPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ? LastReportPath : "";
-            var mail = _report.PrepareEmail(input, new ReportResult(true, "", zip, ""), AppendLog);
-            ReportStatus = mail.Success
-                ? (mail.AttachedAutomatically
-                    ? $"Rascunho reaberto no Outlook para {ReportEmail}."
-                    : $"Cliente de e-mail reaberto para {ReportEmail}. Anexe o .zip manualmente.")
-                : mail.Error;
+            var issue = _report.OpenGitHubIssue(input, new ReportResult(true, "", zip, ""), AppendLog);
+            ReportStatus = issue.Success
+                ? "Issue reaberto no GitHub. Anexe o .zip e revise as imagens antes de publicar."
+                : issue.Error;
         }
         catch (Exception ex) { ReportStatus = $"Falha: {ex.Message}"; }
     }

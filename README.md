@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/fernandogssilva/Renova?style=flat-square&color=10B981)](https://github.com/fernandogssilva/Renova/releases)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-10B981?style=flat-square)](LICENSE)
 [![Plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0EA5E9?style=flat-square)](#requisitos)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20WPF-8B5CF6?style=flat-square)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10%20LTS%20WPF-8B5CF6?style=flat-square)](https://dotnet.microsoft.com/)
 
 </div>
 
@@ -87,14 +87,14 @@ Prefere sem instalar? Pegue o `Renova.exe` na mesma página e execute. Ele solic
 Cada release traz o hash **SHA-256** para você conferir a integridade:
 
 ```powershell
-Get-FileHash .\Renova-Setup-2.3.0.exe -Algorithm SHA256
+Get-FileHash .\Renova-Setup-3.0.0.exe -Algorithm SHA256
 Get-FileHash .\Renova.exe -Algorithm SHA256
 ```
 
 ### Gerar o instalador
 
 ```powershell
-# Requer .NET 8 SDK e Inno Setup 6 (winget install JRSoftware.InnoSetup)
+# Requer .NET 10 SDK e Inno Setup 6 (winget install JRSoftware.InnoSetup)
 .\scripts\build-installer.ps1
 ```
 
@@ -178,6 +178,7 @@ Nenhum dado sai da sua máquina. As únicas chamadas de rede são para fontes p�
 | `learn.microsoft.com` | Release-health do Windows |
 | `raw.githubusercontent.com` | Base winapp2.ini |
 | `www.powershellgallery.com` | Módulo PSWindowsUpdate |
+| `github.com` | Só se você reportar um problema: o navegador abre um issue para você revisar e publicar |
 
 Sem telemetria, sem analytics, sem crash reports. Os logs ficam só no seu disco, e os caminhos são sanitizados (`C:\Users\<nome>\` vira `C:\Users\%USER%\`) para você poder compartilhá-los sem se expor.
 

@@ -1412,25 +1412,18 @@
                             <!-- ===== Envio ===== -->
                             <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
                                 <StackPanel>
-                                    <TextBlock Text="Enviar por e-mail" Style="{StaticResource CardTitle}" Margin="0,0,0,8"/>
-                                    <Grid Margin="0,0,0,10">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0" Padding="9,7"
-                                                 Text="{Binding ReportEmail, UpdateSourceTrigger=PropertyChanged}"/>
-                                        <CheckBox Grid.Column="1" Content="Abrir e-mail ao gerar" Margin="14,0,0,0"
-                                                  VerticalAlignment="Center" Foreground="{DynamicResource Fg1Brush}"
-                                                  IsChecked="{Binding ReportSendByEmail}"/>
-                                    </Grid>
+                                    <TextBlock Text="Publicar no GitHub" Style="{StaticResource CardTitle}" Margin="0,0,0,8"/>
+                                    <CheckBox Content="Abrir o issue no GitHub ao gerar" Margin="0,0,0,10"
+                                              Foreground="{DynamicResource Fg1Brush}"
+                                              IsChecked="{Binding ReportOpenIssue}"/>
                                     <TextBlock Style="{StaticResource CardCaption}" FontSize="11.5" LineHeight="18" TextWrapping="Wrap">
-                                        <Run Text="O Renova não envia o e-mail sozinho." FontWeight="SemiBold"/>
-                                        <Run Text="Ele abre um rascunho no seu cliente de e-mail já preenchido — você revisa e clica em enviar."/>
+                                        <Run Text="O Renova não publica nada sozinho." FontWeight="SemiBold"/>
+                                        <Run Text="Ele abre no navegador um issue já preenchido no repositório do Renova e o Explorer com o .zip selecionado. Você arrasta o arquivo para o issue, revisa e clica em Submit."/>
                                         <LineBreak/><LineBreak/>
-                                        <Run Text="Com o Outlook instalado, o .zip é anexado automaticamente. Sem ele, o Windows abre o cliente padrão e o Explorer com o arquivo selecionado, porque o protocolo mailto não permite anexo por segurança."/>
+                                        <Run Text="O issue é público." FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}"/>
+                                        <Run Text="O texto e o log são mascarados, mas as imagens não: confira se nenhum print mostra dado pessoal antes de publicar. É preciso ter uma conta gratuita no GitHub."/>
                                         <LineBreak/><LineBreak/>
-                                        <Run Text="Nenhuma credencial de e-mail fica embutida no aplicativo." FontWeight="SemiBold"
+                                        <Run Text="Nenhuma senha ou token fica embutido no aplicativo." FontWeight="SemiBold"
                                              Foreground="{DynamicResource SuccessBrush}"/>
                                     </TextBlock>
                                 </StackPanel>
@@ -1450,8 +1443,8 @@
                                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                                             <Button Content="Pasta de reports" Style="{StaticResource SecondaryButton}"
                                                     Command="{Binding OpenReportsFolderCommand}" Margin="0,0,8,0"/>
-                                            <Button Content="Reabrir e-mail" Style="{StaticResource SecondaryButton}"
-                                                    Command="{Binding EmailLastReportCommand}" Margin="0,0,8,0"
+                                            <Button Content="Reabrir issue" Style="{StaticResource SecondaryButton}"
+                                                    Command="{Binding IssueLastReportCommand}" Margin="0,0,8,0"
                                                     Visibility="{Binding LastReportPath, Converter={StaticResource B2V}}"/>
                                             <Button Content="Limpar" Style="{StaticResource ChipButton}"
                                                     Command="{Binding ClearReportCommand}" Margin="0,0,8,0"/>
@@ -1514,7 +1507,7 @@
                     <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Fg3Brush}"
                                FontSize="11.5" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="1" Foreground="{DynamicResource Fg3Brush}" FontSize="11"
-                               Text="Renova 2.3 · CyberThrust"/>
+                               Text="{Binding RodapeVersao, Mode=OneTime}"/>
                 </Grid>
             </Border>
         </Grid>
@@ -1538,7 +1531,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="Renova" FontSize="16" FontWeight="Bold"
                                        Foreground="{DynamicResource Fg0Brush}"/>
-                            <TextBlock Text="versão 2.3" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
+                            <TextBlock Text="{Binding VersaoApp, Mode=OneTime, StringFormat=versão {0}}" FontSize="10.5" Foreground="{DynamicResource Fg3Brush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

@@ -10,7 +10,7 @@
 #define AppName           "Renova"
 #define AppExeName        "Renova.exe"
 #ifndef AppVersion
-  #define AppVersion      "2.3.0"
+  #define AppVersion      "3.0.0"
 #endif
 #define AppPublisher      "CyberThrust"
 #define AppURL            "https://cyberthrust.io/"
