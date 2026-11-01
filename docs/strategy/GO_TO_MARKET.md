@@ -1,4 +1,4 @@
-# Go-to-Market — Curupira
+# Go-to-Market — Renova
 
 **Data:** julho/2026
 **Autor:** CyberThrust — Fernando Silva
@@ -19,7 +19,7 @@
 > "O painel único que roda Windows Update, Winget, limpeza e diagnóstico de segurança sem te pedir permissão dez vezes."
 
 **Diferenciais competitivos:**
-| Feature | Curupira | CCleaner Free | Glary Utilities | Windows Settings |
+| Feature | Renova | CCleaner Free | Glary Utilities | Windows Settings |
 |---|---|---|---|---|
 | Sem adware/bloatware | ✅ | ❌ | ❌ | ✅ |
 | CVEs pendentes (MSRC) | ✅ | ❌ | ❌ | ❌ |
@@ -48,7 +48,7 @@
 
 ### Tier 3 — **Profissional** — R$ 97 (pagamento único, 3 dispositivos)
 - Tudo do Pessoal
-- CLI headless para agendamento (`Curupira.exe --schedule`)
+- CLI headless para agendamento (`Renova.exe --schedule`)
 - Notificações no tray quando aparecerem KBs críticas
 - Prioridade no suporte
 
@@ -74,7 +74,7 @@ Topo (awareness)
 ├── YouTube Shorts (60s por feature: "Winget update em 1 clique")
 ├── Reddit r/brdev e r/Windows_BR (posts pontuais e não-spam)
 ├── Blog CyberThrust (SEO: "como atualizar Windows 11 sem CCleaner")
-└── Comparativos "Curupira vs CCleaner"
+└── Comparativos "Renova vs CCleaner"
 
 Meio (consideração)
 ├── Landing page (Framer ou Astro)
@@ -150,7 +150,7 @@ Pós-venda
 
 ## 8. Próximas 3 Ações Concretas
 
-1. **Registrar o domínio** `curupira.app.br` ou `curupira.cyberthrust.io`
+1. **Registrar o domínio** `renova.app.br` ou `renova.cyberthrust.io`
 2. Escrever a **copy da LP** (headline, subheadline, 3 seções de features, FAQ, CTA)
 3. Implementar o **sistema de chaves** (ver `docs/strategy/LICENSE_SYSTEM.md` — a criar)
 

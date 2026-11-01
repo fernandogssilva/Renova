@@ -6,3 +6,7 @@ publish/
 installer/output/
 *.log
 .idea/
+
+# Instalador gerado na raiz (publicar em Releases, nao no git)
+/Renova-Setup-*.exe
+/Renova-Setup-*.exe.sha256

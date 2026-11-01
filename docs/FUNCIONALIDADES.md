@@ -1,4 +1,4 @@
-# Funcionalidades do Curupira
+# Funcionalidades do Renova
 
 Documento completo do que a plataforma faz, módulo por módulo.
 
@@ -13,7 +13,7 @@ Documento completo do que a plataforma faz, módulo por módulo.
 - [Limpeza](#limpeza)
 - [Desempenho](#desempenho)
 - [Sistema](#sistema)
-- [O que o Curupira deliberadamente NÃO faz](#o-que-o-curupira-deliberadamente-não-faz)
+- [O que o Renova deliberadamente NÃO faz](#o-que-o-renova-deliberadamente-não-faz)
 
 ---
 
@@ -176,7 +176,7 @@ Recursos do parser:
 | Cache de nomes | `MUICache` com referências mortas | Resíduo |
 | Extensão sem destino | `.ext` apontando para ProgID não registrado | Resíduo |
 
-**Se o backup falhar, a remoção é abortada.** Restaurar é duplo clique no `.reg` salvo em `%LOCALAPPDATA%\Curupira\registry-backups\`.
+**Se o backup falhar, a remoção é abortada.** Restaurar é duplo clique no `.reg` salvo em `%LOCALAPPDATA%\Renova\registry-backups\`.
 
 ---
 
@@ -220,7 +220,7 @@ Recursos do parser:
 
 Verifica tudo que o app precisa e instala o que for instalável:
 
-| Componente | Instalável pelo Curupira |
+| Componente | Instalável pelo Renova |
 |---|---|
 | Provedor NuGet | Sim |
 | Repositório PSGallery (confiável) | Sim |
@@ -239,12 +239,12 @@ Cada módulo mostra em tempo real: estado, contador de itens encontrados, barra 
 ### Logs
 
 - Painel ao vivo com rolagem automática
-- Arquivo em `%LOCALAPPDATA%\Curupira\logs\`, rotação diária, 14 dias de retenção
+- Arquivo em `%LOCALAPPDATA%\Renova\logs\`, rotação diária, 14 dias de retenção
 - Caminhos sanitizados: `C:\Users\<nome>\` vira `C:\Users\%USER%\` para você poder compartilhar logs sem expor identidade
 
 ---
 
-## O que o Curupira deliberadamente NÃO faz
+## O que o Renova deliberadamente NÃO faz
 
 Tão importante quanto a lista de recursos:
 
@@ -271,7 +271,7 @@ Tão importante quanto a lista de recursos:
 
 ## Onde ficam os dados
 
-Tudo em `%LOCALAPPDATA%\Curupira\`:
+Tudo em `%LOCALAPPDATA%\Renova\`:
 
 ```
 logs\                 registro de operações, rotação diária

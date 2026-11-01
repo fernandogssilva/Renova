@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="docs/brand/curupira-logo.svg" alt="Curupira" width="560">
+<img src="docs/brand/renova-logo.svg" alt="Renova" width="560">
 
 **Manutenção, desempenho e segurança para Windows — num painel só.**
 
-[![Release](https://img.shields.io/github/v/release/fernandogssilva/Curupira?style=flat-square&color=10B981)](https://github.com/fernandogssilva/Curupira/releases)
+[![Release](https://img.shields.io/github/v/release/fernandogssilva/Renova?style=flat-square&color=10B981)](https://github.com/fernandogssilva/Renova/releases)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-10B981?style=flat-square)](LICENSE)
 [![Plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0EA5E9?style=flat-square)](#requisitos)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20WPF-8B5CF6?style=flat-square)](https://dotnet.microsoft.com/)
@@ -13,9 +13,9 @@
 
 ---
 
-Na lenda, o **Curupira** é o guardião da mata que anda com os pés virados ao contrário. Quem tenta seguir suas pegadas vai na direção errada e se perde. É o mesmo princípio de uma boa defesa: proteger o território e confundir quem tenta entrar.
+O **Renova** devolve ao seu computador o fôlego de quando ele era novo: atualizado, limpo, leve e protegido. Tudo isso sem complicação, sem susto e sem precisar entender de informática.
 
-O Curupira reúne num único painel o que hoje exige quatro telas diferentes do Windows — Windows Update, atualização de aplicativos, limpeza de disco, verificação de vulnerabilidades e diagnóstico de configuração insegura. Sem bundleware, sem telemetria, sem popup de upsell.
+O Renova reúne num único painel o que hoje exige quatro telas diferentes do Windows — Windows Update, atualização de aplicativos, limpeza de disco, verificação de vulnerabilidades e diagnóstico de configuração insegura. Sem bundleware, sem telemetria, sem popup de upsell.
 
 ---
 
@@ -45,7 +45,7 @@ Cada área responde três perguntas, em vez de mostrar só um número:
 CVEs oficiais da Microsoft (MSRC) somadas a **12 verificações locais** de configuração insegura — SMBv1 ligado, RDP sem NLA, LSA Protection desativada, BitLocker ausente. Marque várias e corrija de uma vez, com estado visual por linha.
 
 ### 🗄️ Regras da comunidade (winapp2)
-Suporte à base [winapp2.ini](https://github.com/MoscaDotTo/Winapp2) — milhares de regras mantidas há mais de 15 anos, cobrindo aplicativos que nenhum limpador genérico conhece. **Formato que o CCleaner 7 abandonou.** O Curupira detecta primeiro o que está instalado, e só então mede.
+Suporte à base [winapp2.ini](https://github.com/MoscaDotTo/Winapp2) — milhares de regras mantidas há mais de 15 anos, cobrindo aplicativos que nenhum limpador genérico conhece. **Formato que o CCleaner 7 abandonou.** O Renova detecta primeiro o que está instalado, e só então mede.
 
 ### 🔑 Registro com backup obrigatório
 7 categorias de entradas órfãs. Todo backup `.reg` é feito **antes** da remoção — se o export falhar, a remoção é abortada. Restaurar é duplo clique.
@@ -66,21 +66,39 @@ O app declara na própria interface o que **não** funciona como prometido por a
 
 > **Liberar RAM não "cria" memória.** O ganho é perceptível depois de fechar aplicativos pesados. Como efeito colateral, o cache de arquivos esfria — por isso não vale executar de minuto em minuto.
 
-Por isso o Curupira **não** varre CLSID em massa, fontes nem Shared DLLs. É exatamente onde os otimizadores de mercado quebram instalações.
+Por isso o Renova **não** varre CLSID em massa, fontes nem Shared DLLs. É exatamente onde os otimizadores de mercado quebram instalações.
 
 ---
 
 ## Instalação
 
-### Baixar pronto
+### Instalador (recomendado)
 
-Pegue o `Curupira.exe` na [página de releases](https://github.com/fernandogssilva/Curupira/releases) e execute. Ele solicita elevação sozinho.
+Baixe o `Renova-Setup-<versão>.exe` na [página de releases](https://github.com/fernandogssilva/Renova/releases), dê dois cliques e siga o assistente:
+
+**Boas-vindas → Licença → Pasta de destino → Opções → Instalar**
+
+Ele instala em `%ProgramFiles%\Renova`, cria os atalhos no menu Iniciar e na área de trabalho e aparece em *Adicionar/Remover Programas*. Não precisa ter o .NET instalado. Se encontrar uma instalação antiga do **Curupira** (nome anterior do produto), o instalador a remove e preserva logs e backups do registro.
+
+### Executável avulso
+
+Prefere sem instalar? Pegue o `Renova.exe` na mesma página e execute. Ele solicita elevação sozinho.
 
 Cada release traz o hash **SHA-256** para você conferir a integridade:
 
 ```powershell
-Get-FileHash .\Curupira.exe -Algorithm SHA256
+Get-FileHash .\Renova-Setup-2.3.0.exe -Algorithm SHA256
+Get-FileHash .\Renova.exe -Algorithm SHA256
 ```
+
+### Gerar o instalador
+
+```powershell
+# Requer .NET 8 SDK e Inno Setup 6 (winget install JRSoftware.InnoSetup)
+.\scripts\build-installer.ps1
+```
+
+O `Renova-Setup-<versão>.exe` é gerado na **raiz do projeto**, junto do `.sha256`.
 
 > O binário ainda **não é assinado**, então o Windows exibe *Fornecedor: Desconhecido* no UAC. Certificado de code signing está no roadmap.
 
@@ -91,13 +109,13 @@ Get-FileHash .\Curupira.exe -Algorithm SHA256
 .\scripts\install-local.ps1
 ```
 
-Copia para `%ProgramFiles%\Curupira`, cria atalhos no desktop e no menu Iniciar, registra em Adicionar/Remover Programas e **verifica e instala os pré-requisitos**.
+Copia para `%ProgramFiles%\Renova`, cria atalhos no desktop e no menu Iniciar, registra em Adicionar/Remover Programas e **verifica e instala os pré-requisitos**.
 
 ### Compilar do código-fonte
 
 ```powershell
-git clone https://github.com/fernandogssilva/Curupira.git
-cd Curupira
+git clone https://github.com/fernandogssilva/Renova.git
+cd Renova
 dotnet restore
 .\scripts\publish.ps1 -SelfContained
 ```
@@ -108,9 +126,9 @@ dotnet restore
 
 | Forma | Arquivo |
 |---|---|
-| Duplo clique | `Curupira.bat` |
-| PowerShell | `.\Curupira.ps1` (use `-Build` para compilar antes) |
-| Executável | `Curupira.exe` |
+| Duplo clique | `Renova.bat` |
+| PowerShell | `.\Renova.ps1` (use `-Build` para compilar antes) |
+| Executável | `Renova.exe` |
 
 ---
 
@@ -129,17 +147,17 @@ Se publicar com `-SelfContained`, nenhum runtime extra é necessário.
 ## Estrutura
 
 ```
-Curupira/
-├── Curupira.sln
-├── Curupira.bat · Curupira.ps1        launchers com auto-elevação
+Renova/
+├── Renova.sln
+├── Renova.bat · Renova.ps1        launchers com auto-elevação
 ├── update.bat                          atualizador de 1 clique
-├── src/Curupira/
+├── src/Renova/
 │   ├── Services/                       16 serviços
 │   ├── ViewModels/MainViewModel.cs     MVVM
 │   ├── Themes/                         paleta clara e escura
 │   └── MainWindow.xaml                 14 seções
-├── installer/setup.iss                 Inno Setup 6
-├── scripts/                            publish · install · build-icon
+├── installer/setup.iss                 instalador (Inno Setup 6)
+├── scripts/                            build-installer · publish · install · build-icon
 └── docs/
     ├── FUNCIONALIDADES.md              documentação completa
     ├── brand/                          logo e ícone
@@ -171,6 +189,6 @@ MIT — veja [LICENSE](LICENSE). Uso do software está sujeito ao [EULA](docs/le
 
 <div align="center">
 
-**Curupira** · quem invade, se perde
+**Renova** · seu Windows em dia
 
 </div>

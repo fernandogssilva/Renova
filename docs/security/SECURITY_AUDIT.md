@@ -1,4 +1,4 @@
-# Auditoria de Segurança — Curupira v1.2
+# Auditoria de Segurança — Renova v1.2
 
 **Escopo:** binário WPF .NET 8 rodando como Administrador, com integração PowerShell, consultas HTTP externas e escrita em Registry.
 
@@ -31,7 +31,7 @@ await File.WriteAllTextAsync(scriptFile, script, ...);
 ```
 `%TEMP%` do usuário é escrivível por outros processos do mesmo usuário. Um malware **sem admin** poderia observar o arquivo aparecer e substituir o conteúdo antes do `powershell.exe` (elevado) executá-lo → EoP.
 
-**Correção:** gravar em pasta privada do app (`%LOCALAPPDATA%\Curupira\.ps`) com ACL restrita a Administrators + SYSTEM, e usar handle exclusivo durante o WriteAll.
+**Correção:** gravar em pasta privada do app (`%LOCALAPPDATA%\Renova\.ps`) com ACL restrita a Administrators + SYSTEM, e usar handle exclusivo durante o WriteAll.
 
 ### 🔴 CRÍTICO 2 — Injeção via parâmetro `KBArticleID`
 

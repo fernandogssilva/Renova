@@ -1,4 +1,4 @@
-# Roadmap de Produto — Curupira
+# Roadmap de Produto — Renova
 
 **Framework:** RICE (Reach · Impact · Confidence · Effort)
 **Data:** julho/2026

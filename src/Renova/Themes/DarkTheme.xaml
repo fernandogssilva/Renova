@@ -1,0 +1,55 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================================
+         RENOVA · Tema Escuro
+         Verde = renovacao e protecao + laranja = acao
+         ============================================================ -->
+
+    <!-- Superficies: verde-terra profundo, nao cinza neutro -->
+    <Color x:Key="Bg0">#0A1410</Color>
+    <Color x:Key="Bg1">#111F19</Color>
+    <Color x:Key="Bg2">#1B2E25</Color>
+    <Color x:Key="Bg3">#2A4437</Color>
+
+    <!-- Texto -->
+    <Color x:Key="Fg0">#F0FDF4</Color>
+    <Color x:Key="Fg1">#D6EFE0</Color>
+    <Color x:Key="Fg2">#8FB5A2</Color>
+    <Color x:Key="Fg3">#5F8271</Color>
+
+    <!-- Marca: verde mata = protecao / laranja fogo = acao -->
+    <Color x:Key="Accent">#34D399</Color>
+    <Color x:Key="AccentAlt">#FB923C</Color>
+
+    <!-- Semantica de estado -->
+    <Color x:Key="Success">#4ADE80</Color>
+    <Color x:Key="Warning">#FBBF24</Color>
+    <Color x:Key="Danger">#F87171</Color>
+    <Color x:Key="Critical">#EF4444</Color>
+
+    <Color x:Key="LogBg">#050C09</Color>
+
+    <SolidColorBrush x:Key="Bg0Brush"        Color="{StaticResource Bg0}"/>
+    <SolidColorBrush x:Key="Bg1Brush"        Color="{StaticResource Bg1}"/>
+    <SolidColorBrush x:Key="Bg2Brush"        Color="{StaticResource Bg2}"/>
+    <SolidColorBrush x:Key="Bg3Brush"        Color="{StaticResource Bg3}"/>
+    <SolidColorBrush x:Key="Fg0Brush"        Color="{StaticResource Fg0}"/>
+    <SolidColorBrush x:Key="Fg1Brush"        Color="{StaticResource Fg1}"/>
+    <SolidColorBrush x:Key="Fg2Brush"        Color="{StaticResource Fg2}"/>
+    <SolidColorBrush x:Key="Fg3Brush"        Color="{StaticResource Fg3}"/>
+    <SolidColorBrush x:Key="AccentBrush"     Color="{StaticResource Accent}"/>
+    <SolidColorBrush x:Key="AccentAltBrush"  Color="{StaticResource AccentAlt}"/>
+    <SolidColorBrush x:Key="SuccessBrush"    Color="{StaticResource Success}"/>
+    <SolidColorBrush x:Key="WarningBrush"    Color="{StaticResource Warning}"/>
+    <SolidColorBrush x:Key="DangerBrush"     Color="{StaticResource Danger}"/>
+    <SolidColorBrush x:Key="CriticalBrush"   Color="{StaticResource Critical}"/>
+    <SolidColorBrush x:Key="LogBgBrush"      Color="{StaticResource LogBg}"/>
+
+    <!-- Gradiente da marca (verde -> fogo) -->
+    <LinearGradientBrush x:Key="BrandGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#34D399" Offset="0"/>
+        <GradientStop Color="#FB923C" Offset="1"/>
+    </LinearGradientBrush>
+
+</ResourceDictionary>

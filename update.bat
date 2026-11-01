@@ -1,11 +1,11 @@
 @echo off
 setlocal
-title Curupira - Atualizador
+title Renova - Atualizador
 color 0B
 
 echo.
 echo  ============================================
-echo   Curupira - Atualizador para %ProgramFiles%
+echo   Renova - Atualizador para %ProgramFiles%
 echo  ============================================
 echo.
 
@@ -20,10 +20,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-set "SRC=%~dp0src\Curupira\bin\publish"
-set "DST=%ProgramFiles%\Curupira"
+set "SRC=%~dp0src\Renova\bin\publish"
+set "DST=%ProgramFiles%\Renova"
 
-if not exist "%SRC%\Curupira.exe" (
+if not exist "%SRC%\Renova.exe" (
     echo  [!] Arquivo de publish nao encontrado em:
     echo      %SRC%
     echo.
@@ -32,8 +32,8 @@ if not exist "%SRC%\Curupira.exe" (
     exit /b 1
 )
 
-echo  [1/3] Fechando Curupira se estiver aberto...
-taskkill /IM Curupira.exe /F >nul 2>&1
+echo  [1/3] Fechando Renova se estiver aberto...
+taskkill /IM Renova.exe /F >nul 2>&1
 timeout /t 1 /nobreak >nul
 
 echo  [2/3] Copiando arquivos para %DST%...
@@ -44,8 +44,8 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo  [3/3] Abrindo Curupira atualizado...
-start "" "%DST%\Curupira.exe"
+echo  [3/3] Abrindo Renova atualizado...
+start "" "%DST%\Renova.exe"
 
 echo.
 echo  Concluido!

@@ -1,10 +1,10 @@
 <#
-    Gera Curupira.ico multi-resolucao (16..256) desenhando o escudo com
+    Gera Renova.ico multi-resolucao (16..256) desenhando o escudo com
     gradiente verde-mata -> laranja-fogo e a PEGADA INVERTIDA via GDI+.
     Nao requer ImageMagick.
 #>
 param(
-    [string]$OutPath = "$(Split-Path $PSScriptRoot -Parent)\src\Curupira\Assets\Curupira.ico"
+    [string]$OutPath = "$(Split-Path $PSScriptRoot -Parent)\src\Renova\Assets\Renova.ico"
 )
 
 $ErrorActionPreference = 'Stop'

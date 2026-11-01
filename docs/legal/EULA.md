@@ -1,11 +1,11 @@
 # CONTRATO DE LICENÇA DE USUÁRIO FINAL (EULA)
-## Curupira
+## Renova
 
 **Última atualização:** 18 de julho de 2026
 **Licenciante:** CyberThrust — Fernando Silva
 **Contato:** fernandogssilva@gmail.com
 
-Ao instalar, copiar, baixar, acessar ou de outra forma utilizar o Curupira ("**Software**"), você ("**Usuário**") concorda em ficar vinculado pelos termos deste Contrato de Licença de Usuário Final ("**EULA**"). Se você não concordar com os termos, **não instale, não execute e desinstale o Software imediatamente**.
+Ao instalar, copiar, baixar, acessar ou de outra forma utilizar o Renova ("**Software**"), você ("**Usuário**") concorda em ficar vinculado pelos termos deste Contrato de Licença de Usuário Final ("**EULA**"). Se você não concordar com os termos, **não instale, não execute e desinstale o Software imediatamente**.
 
 ---
 
@@ -116,7 +116,7 @@ MESMO QUE O LICENCIANTE TENHA SIDO AVISADO DA POSSIBILIDADE DE TAIS DANOS.
 - `api.msrc.microsoft.com` — CVEs da Microsoft
 - `catalog.update.microsoft.com` — abertura de páginas de KB no navegador
 
-8.3 Logs de operação são gravados **exclusivamente no dispositivo do Usuário** em `%LOCALAPPDATA%\Curupira\logs\` e podem ser inspecionados ou removidos pelo Usuário a qualquer momento.
+8.3 Logs de operação são gravados **exclusivamente no dispositivo do Usuário** em `%LOCALAPPDATA%\Renova\logs\` e podem ser inspecionados ou removidos pelo Usuário a qualquer momento.
 
 8.4 Nas versões pagas com ativação online, dados mínimos (chave de licença, hash do dispositivo, timestamp) podem ser enviados ao servidor de validação. Esses dados são tratados conforme a Política de Privacidade disponível no site do Licenciante.
 
@@ -137,7 +137,7 @@ MESMO QUE O LICENCIANTE TENHA SIDO AVISADO DA POSSIBILIDADE DE TAIS DANOS.
 
 ## 10. Alterações no EULA
 
-10.1 O Licenciante reserva-se o direito de modificar este EULA a qualquer momento. A versão atualizada será disponibilizada em https://github.com/fernandogssilva/Curupira/blob/master/docs/legal/EULA.md.
+10.1 O Licenciante reserva-se o direito de modificar este EULA a qualquer momento. A versão atualizada será disponibilizada em https://github.com/fernandogssilva/Renova/blob/master/docs/legal/EULA.md.
 
 10.2 O uso continuado do Software após a publicação de alterações constitui aceitação dos novos termos.
 
