@@ -9,6 +9,10 @@
 [![Plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0EA5E9?style=flat-square)](#requisitos)
 [![.NET](https://img.shields.io/badge/.NET-10%20LTS%20WPF-8B5CF6?style=flat-square)](https://dotnet.microsoft.com/)
 
+### [⬇️ Baixar o instalador do Renova 3.0.0](https://github.com/fernandogssilva/Renova/raw/master/Renova-Setup-3.0.0.exe)
+
+Windows 10 e 11 (64 bits) · 63 MB · dois cliques e **Avançar → Avançar → Instalar**
+
 </div>
 
 ---
@@ -74,9 +78,11 @@ Por isso o Renova **não** varre CLSID em massa, fontes nem Shared DLLs. É exat
 
 ### Instalador (recomendado)
 
-Baixe o `Renova-Setup-<versão>.exe` na [página de releases](https://github.com/fernandogssilva/Renova/releases), dê dois cliques e siga o assistente:
+Baixe o [`Renova-Setup-3.0.0.exe`](https://github.com/fernandogssilva/Renova/raw/master/Renova-Setup-3.0.0.exe) (também na raiz deste repositório e na [página de releases](https://github.com/fernandogssilva/Renova/releases/latest)), dê dois cliques e siga o assistente:
 
 **Boas-vindas → Licença → Pasta de destino → Opções → Instalar**
+
+Na primeira vez, o Windows pode mostrar *"O Windows protegeu o computador"*, porque o instalador ainda não tem assinatura digital: clique em **Mais informações → Executar assim mesmo**.
 
 Ele instala em `%ProgramFiles%\Renova`, cria os atalhos no menu Iniciar e na área de trabalho e aparece em *Adicionar/Remover Programas*. Não precisa ter o .NET instalado. Se encontrar uma instalação antiga do **Curupira** (nome anterior do produto), o instalador a remove e preserva logs e backups do registro.
 
